@@ -1,0 +1,16 @@
+{
+  "name": "game999-full-stack",
+  "version": "1.0.0",
+  "scripts": {
+    "install:backend": "cd backend && npm install",
+    "install:admin": "cd admin && npm install",
+    "install:all": "npm run install:backend && npm run install:admin",
+    "start:backend": "cd backend && npm run dev",
+    "start:admin": "cd admin && npm start",
+    "start:all": "concurrently \"npm run start:backend\" \"npm run start:admin\"",
+    "build:admin": "cd admin && npm run build"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 
@@ -16,18 +17,31 @@ class AuthProvider with ChangeNotifier {
   bool get isLoading => _isLoading;
   bool get isLoggedIn => _isLoggedIn;
 
-  // Constructor to initialize state
+  // Constructor
   AuthProvider() {
-    // Load user data from shared preferences if available
-    _loadUserData();
+    _initializeAuth();
+  }
+
+  // Initialize authentication state safely
+  Future<void> _initializeAuth() async {
+    try {
+      await _loadUserData();
+    } catch (e) {
+      debugPrint('Auth initialization error: $e');
+      // Set safe defaults
+      _isLoggedIn = false;
+      _currentUser = null;
+      _isLoading = false;
+      notifyListeners();
+    }
   }
 
   // Load user data from shared preferences
   Future<void> _loadUserData() async {
-    _isLoading = true;
-    notifyListeners();
-
     try {
+      _isLoading = true;
+      notifyListeners();
+
       final prefs = await SharedPreferences.getInstance();
       final isLoggedIn = prefs.getBool(AppConstants.isLoggedInKey) ?? false;
 
@@ -40,6 +54,8 @@ class AuthProvider with ChangeNotifier {
       }
     } catch (e) {
       debugPrint('Error loading user data: $e');
+      _isLoggedIn = false;
+      _currentUser = null;
     } finally {
       _isLoading = false;
       notifyListeners();

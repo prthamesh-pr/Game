@@ -39,6 +39,15 @@ class _WebMainScreenState extends State<WebMainScreen> {
   Widget build(BuildContext context) {
     return Consumer<AuthProvider>(
       builder: (context, authProvider, child) {
+        // Show loading spinner while loading
+        if (authProvider.isLoading) {
+          return const Scaffold(
+            body: Center(
+              child: CircularProgressIndicator(),
+            ),
+          );
+        }
+
         if (!authProvider.isLoggedIn) {
           return const LoginScreen();
         }

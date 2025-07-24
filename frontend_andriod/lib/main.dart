@@ -10,6 +10,7 @@ import 'constants/theme_data.dart';
 import 'services/navigation_service.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
   runApp(const MyApp());
 }
 
@@ -28,9 +29,21 @@ class MyApp extends StatelessWidget {
         debugShowCheckedModeBanner: false,
         theme: AppTheme.lightTheme,
         navigatorKey: NavigationService().navigatorKey,
-        home: kIsWeb ? const WebMainScreen() : const SplashScreen(),
+        home: const AppHome(),
       ),
     );
+  }
+}
+
+class AppHome extends StatelessWidget {
+  const AppHome({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    if (kIsWeb) {
+      return const WebMainScreen();
+    }
+    return const SplashScreen();
   }
 }
           //

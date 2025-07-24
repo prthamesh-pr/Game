@@ -12,53 +12,82 @@ class AuthProvider with ChangeNotifier {
   User? _currentUser;
   bool _isLoading = false;
   bool _isLoggedIn = false;
+  bool _isInitialized = false;
 
   User? get currentUser => _currentUser;
   bool get isLoading => _isLoading;
   bool get isLoggedIn => _isLoggedIn;
+  bool get isInitialized => _isInitialized;
 
   // Constructor
   AuthProvider() {
-    _initializeAuth();
+    _safeInitialize();
   }
 
-  // Initialize authentication state safely
-  Future<void> _initializeAuth() async {
+  // Safe initialization that won't crash the app
+  Future<void> _safeInitialize() async {
     try {
+      // Delay initialization to avoid race conditions
+      await Future.delayed(const Duration(milliseconds: 100));
       await _loadUserData();
     } catch (e) {
-      debugPrint('Auth initialization error: $e');
-      // Set safe defaults
-      _isLoggedIn = false;
-      _currentUser = null;
-      _isLoading = false;
-      notifyListeners();
+      debugPrint('Safe auth initialization error: $e');
+    } finally {
+      _isInitialized = true;
+      if (!_isLoading) {
+        notifyListeners();
+      }
     }
   }
 
-  // Load user data from shared preferences
+  // Load user data from shared preferences with robust error handling
   Future<void> _loadUserData() async {
     try {
       _isLoading = true;
-      notifyListeners();
+      if (_isInitialized) notifyListeners();
 
-      final prefs = await SharedPreferences.getInstance();
+      // Use a timeout for SharedPreferences to prevent hanging
+      final prefs = await SharedPreferences.getInstance()
+          .timeout(const Duration(seconds: 5));
+      
       final isLoggedIn = prefs.getBool(AppConstants.isLoggedInKey) ?? false;
 
       if (isLoggedIn) {
         final userData = prefs.getString(AppConstants.userKey);
-        if (userData != null) {
-          _currentUser = User.fromJson(json.decode(userData));
-          _isLoggedIn = true;
+        if (userData != null && userData.isNotEmpty) {
+          try {
+            final userJson = json.decode(userData);
+            _currentUser = User.fromJson(userJson);
+            _isLoggedIn = true;
+          } catch (e) {
+            debugPrint('Error parsing user data: $e');
+            // Clear corrupted data
+            await _clearUserData();
+          }
         }
       }
     } catch (e) {
       debugPrint('Error loading user data: $e');
+      // Set safe defaults
       _isLoggedIn = false;
       _currentUser = null;
     } finally {
       _isLoading = false;
-      notifyListeners();
+      if (_isInitialized) notifyListeners();
+    }
+  }
+
+  // Clear user data safely
+  Future<void> _clearUserData() async {
+    try {
+      final prefs = await SharedPreferences.getInstance()
+          .timeout(const Duration(seconds: 5));
+      await prefs.remove(AppConstants.isLoggedInKey);
+      await prefs.remove(AppConstants.userKey);
+      _isLoggedIn = false;
+      _currentUser = null;
+    } catch (e) {
+      debugPrint('Error clearing user data: $e');
     }
   }
 

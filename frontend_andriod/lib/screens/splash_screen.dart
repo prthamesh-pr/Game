@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:animated_text_kit/animated_text_kit.dart';
+import 'package:provider/provider.dart';
 import '../constants/colors.dart';
 import '../constants/app_constants.dart';
+import '../providers/auth_provider.dart';
 import 'login_screen.dart';
+import 'main_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -11,72 +13,114 @@ class SplashScreen extends StatefulWidget {
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _fadeAnimation;
-
+class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 2),
-    );
+    _initializeSplash();
+  }
 
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(_controller);
-
-    _controller.forward();
-
-    // Navigate to login screen after delay
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      Future.delayed(const Duration(seconds: 3), () {
+  Future<void> _initializeSplash() async {
+    try {
+      // Wait for a minimum splash duration
+      await Future.delayed(const Duration(seconds: 2));
+      
+      if (mounted) {
+        // Check authentication status
+        final authProvider = Provider.of<AuthProvider>(context, listen: false);
+        
+        // Navigate based on auth status
+        Widget nextScreen;
+        if (authProvider.isLoggedIn) {
+          nextScreen = const MainScreen();
+        } else {
+          nextScreen = const LoginScreen();
+        }
+        
         if (mounted) {
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => const LoginScreen()),
+            MaterialPageRoute(builder: (context) => nextScreen),
           );
         }
-      });
-    });
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
+      }
+    } catch (e) {
+      debugPrint('Splash initialization error: $e');
+      // Fallback to login screen on error
+      if (mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const LoginScreen()),
+        );
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.primary,
-      body: Center(
-        child: FadeTransition(
-          opacity: _fadeAnimation,
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              AppColors.primary,
+              AppColors.secondary,
+            ],
+          ),
+        ),
+        child: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.games, size: 100, color: Colors.white),
-              const SizedBox(height: 30),
-              AnimatedTextKit(
-                animatedTexts: [
-                  TypewriterAnimatedText(
-                    AppConstants.appName,
-                    textStyle: const TextStyle(
-                      fontSize: 40,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
+              // App Logo/Icon
+              Container(
+                width: 120,
+                height: 120,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(30),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Colors.black26,
+                      blurRadius: 15,
+                      offset: Offset(0, 8),
                     ),
-                    speed: const Duration(milliseconds: 150),
-                  ),
-                ],
-                totalRepeatCount: 1,
+                  ],
+                ),
+                child: const Icon(
+                  Icons.casino,
+                  size: 60,
+                  color: AppColors.primary,
+                ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 40),
+              // App Name
               const Text(
-                'Try Your Luck Today!',
-                style: TextStyle(fontSize: 18, color: Colors.white70),
+                AppConstants.appName,
+                style: TextStyle(
+                  fontSize: 36,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                  letterSpacing: 2,
+                ),
+              ),
+              const SizedBox(height: 16),
+              // Tagline
+              const Text(
+                'Play Smart, Win Big!',
+                style: TextStyle(
+                  fontSize: 18,
+                  color: Colors.white70,
+                  fontWeight: FontWeight.w300,
+                ),
+              ),
+              const SizedBox(height: 60),
+              // Loading Indicator
+              const CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                strokeWidth: 3,
               ),
             ],
           ),

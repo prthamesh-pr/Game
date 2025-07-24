@@ -546,5 +546,48 @@ module.exports = {
   getGameInfo,
   getRecentResults,
   cancelSelection,
-  getCurrentSelections
+  getCurrentSelections,
+  getAllRounds
+};
+
+/**
+ * Get All Game Rounds with Pagination
+ */
+const getAllRounds = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+    
+    // Get rounds with pagination
+    const rounds = await Result.find()
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+      
+    // Get total count for pagination
+    const totalCount = await Result.countDocuments();
+    
+    res.json({
+      success: true,
+      message: 'Game rounds retrieved successfully',
+      data: {
+        rounds,
+        pagination: {
+          currentPage: page,
+          totalPages: Math.ceil(totalCount / limit),
+          totalCount,
+          hasNext: page < Math.ceil(totalCount / limit),
+          hasPrev: page > 1
+        }
+      }
+    });
+    
+  } catch (error) {
+    console.error('Error fetching game rounds:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching game rounds'
+    });
+  }
 };

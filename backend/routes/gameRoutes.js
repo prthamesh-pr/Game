@@ -8,7 +8,8 @@ const {
   getGameInfo,
   getRecentResults,
   cancelSelection,
-  getCurrentSelections
+  getCurrentSelections,
+  getAllRounds
 } = require('../controllers/gameController');
 
 const router = express.Router();
@@ -24,6 +25,37 @@ router.post('/select', [
   validationRules.numberSelection,
   handleValidationErrors
 ], selectNumber);
+
+/**
+ * @route   GET /api/game/current
+ * @desc    Get current active round information (alias for /round/current)
+ * @access  Public (Optional Auth)
+ */
+router.get('/current', [
+  rateLimiters.general,
+  optionalAuth
+], getCurrentRound);
+
+/**
+ * @route   GET /api/game/rounds/current
+ * @desc    Get current active round information (another alias for /round/current)
+ * @access  Public (Optional Auth)
+ */
+router.get('/rounds/current', [
+  rateLimiters.general,
+  optionalAuth
+], getCurrentRound);
+
+/**
+ * @route   GET /api/game/rounds
+ * @desc    Get all game rounds with pagination
+ * @access  Public
+ */
+router.get('/rounds', [
+  rateLimiters.general,
+  validationRules.pagination,
+  handleValidationErrors
+], getAllRounds);
 
 /**
  * @route   GET /api/game/round/current

@@ -1,9 +1,14 @@
-import React, { useState } from 'react';
-import { Container, Row, Col, Card, Form, Button, Alert } from 'react-bootstrap';
+import React, { useState, useEffect } from 'react';
+import { Container, Row, Col, Card, Form, Button, Alert, Spinner } from 'react-bootstrap';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
 import { useAuth } from '../contexts/AuthContext';
 import { Navigate } from 'react-router-dom';
+import axios from 'axios';
+import { 
+  isRenderStartupIssue,
+  getRenderFreeServiceSuggestions
+} from '../utils/apiErrorHandler';
 
 const validationSchema = Yup.object({
   email: Yup.string()
@@ -17,6 +22,30 @@ const validationSchema = Yup.object({
 const Login = () => {
   const { login, isAuthenticated } = useAuth();
   const [error, setError] = useState('');
+  const [serverStatus, setServerStatus] = useState('checking'); // 'checking', 'online', 'offline', 'starting'
+  
+  // Check if the backend server is up
+  useEffect(() => {
+    const checkServerStatus = async () => {
+      try {
+        // Use a simple API endpoint to check if server is responding
+        const baseUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+        await axios.get(`${baseUrl}/auth/admin/login`, { timeout: 5000 });
+        setServerStatus('online');
+      } catch (err) {
+        if (isRenderStartupIssue(err)) {
+          setServerStatus('starting');
+        } else if (err.response) {
+          // If we get a response, even an error, the server is up
+          setServerStatus('online');
+        } else {
+          setServerStatus('offline');
+        }
+      }
+    };
+    
+    checkServerStatus();
+  }, []);
 
   if (isAuthenticated) {
     return <Navigate to="/dashboard" />;
@@ -25,12 +54,22 @@ const Login = () => {
   const handleSubmit = async (values, { setSubmitting }) => {
     try {
       setError('');
+      console.log("Attempting login with:", values);
       const result = await login(values);
       
       if (!result.success) {
+        console.error("Login failed:", result.message);
         setError(result.message);
+        
+        // Check for specific error cases
+        if (result.message?.toLowerCase().includes('too many authentication attempts')) {
+          setError('Account is temporarily locked due to too many failed login attempts. Please try again later.');
+        }
+      } else {
+        console.log("Login successful!");
       }
     } catch (err) {
+      console.error("Login error:", err);
       setError('Login failed. Please try again.');
     } finally {
       setSubmitting(false);
@@ -51,6 +90,35 @@ const Login = () => {
                   </h2>
                   <p className="text-muted">Sign in to access the admin panel</p>
                 </div>
+                
+                {serverStatus === 'checking' && (
+                  <Alert variant="info" className="mb-3 d-flex align-items-center">
+                    <Spinner animation="border" size="sm" role="status" className="me-2" />
+                    <span>Checking server connection...</span>
+                  </Alert>
+                )}
+                
+                {serverStatus === 'starting' && (
+                  <Alert variant="warning" className="mb-3">
+                    <h5><i className="bi bi-hourglass-split me-2"></i>Server is starting up</h5>
+                    <p className="mb-0">This may take 1-2 minutes if the server was inactive.</p>
+                    <hr />
+                    <small>
+                      <ul className="mb-0 ps-3">
+                        {getRenderFreeServiceSuggestions().map((suggestion, index) => (
+                          <li key={index}>{suggestion}</li>
+                        ))}
+                      </ul>
+                    </small>
+                  </Alert>
+                )}
+                
+                {serverStatus === 'offline' && (
+                  <Alert variant="danger" className="mb-3">
+                    <h5><i className="bi bi-exclamation-triangle me-2"></i>Server is offline</h5>
+                    <p>The backend server is currently not responding. Please try again later or contact the administrator.</p>
+                  </Alert>
+                )}
 
                 {error && (
                   <Alert variant="danger" className="mb-3">
@@ -128,12 +196,6 @@ const Login = () => {
                     </Form>
                   )}
                 </Formik>
-
-                <div className="text-center mt-4">
-                  <small className="text-muted">
-                    Default: admin@numbergame.com / Admin@123
-                  </small>
-                </div>
               </Card.Body>
             </Card>
           </Col>

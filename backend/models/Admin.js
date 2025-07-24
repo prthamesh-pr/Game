@@ -92,9 +92,13 @@ adminSchema.methods.incLoginAttempts = function() {
   
   const updates = { $inc: { loginAttempts: 1 } };
   
-  // Lock account after 5 failed attempts for 2 hours
-  if (this.loginAttempts + 1 >= 5 && !this.isLocked) {
-    updates.$set = { lockUntil: Date.now() + 2 * 60 * 60 * 1000 }; // 2 hours
+  // In development, be more lenient with lockouts
+  const maxAttempts = process.env.NODE_ENV === 'development' ? 10 : 5;
+  const lockDuration = process.env.NODE_ENV === 'development' ? 15 * 60 * 1000 : 2 * 60 * 60 * 1000; // 15 min in dev, 2 hours in prod
+  
+  // Lock account after max failed attempts
+  if (this.loginAttempts + 1 >= maxAttempts && !this.isLocked) {
+    updates.$set = { lockUntil: Date.now() + lockDuration };
   }
   
   return this.updateOne(updates);

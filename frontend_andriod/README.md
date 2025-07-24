@@ -1,29 +1,92 @@
-# Number Game - Mobile App
+# Game 999 - Flutter Web App
 
-This is a Flutter implementation of a number-based gaming app where users can select numbers, place bets, and view results.
+A responsive number guessing game built with Flutter, featuring multiple game classes, real-time statistics, and token-based gameplay.
 
 ## Features
 
-- **Mock Authentication**: Login/signup with mock data
-- **Game Classes**: Three different game classes (A, B, C) with different number patterns
-- **Number Selection**: Select numbers and place bets
-- **Mock Wallet**: Track token balance and bet amounts
-- **Game Results**: View mock results and game outcomes
-- **Play History**: Track your game play history
+- **🎮 Multiple Game Classes**: Three different game types (A, B, C) with unique number patterns
+- **📱 Responsive Design**: Optimized for both mobile and web platforms
+- **🎯 Real-time Statistics**: Live game stats, win rates, and performance tracking
+- **💰 Token Wallet System**: Secure token-based betting and rewards
+- **📊 Live Results**: Real-time game results and history tracking
+- **🏆 User Dashboard**: Comprehensive dashboard with game analytics
+- **🎨 Modern UI**: Beautiful, animated interface with smooth transitions
 
 ## Game Classes
 
-- **Class A**: 1x3 repeating numbers (e.g., 111, 222)
-- **Class B**: 2x1 pattern (e.g., 112, 221)
-- **Class C**: Unique 3-digit numbers (e.g., 123, 456)
+- **Class A**: Repeating Numbers (111, 222, 333) - High reward potential
+- **Class B**: Pattern Numbers (112, 221, 334) - Balanced risk/reward
+- **Class C**: Unique Numbers (123, 456, 789) - Strategic gameplay
+
+## Tech Stack
+
+- **Frontend**: Flutter (Dart)
+- **State Management**: Provider
+- **UI Framework**: Material Design + Custom Components
+- **Responsive Design**: ResponsiveBuilder, LayoutBuilder
+- **Deployment**: Vercel
+- **Version Control**: Git/GitHub
 
 ## Setup and Run
 
-1. Make sure you have Flutter installed
-2. Navigate to the frontend_andriod folder
-3. Run `flutter pub get` to install dependencies
-4. Run `flutter run` to start the application
+### Prerequisites
+- Flutter SDK (>=3.0.0)
+- Dart SDK
+- Web browser (Chrome recommended)
 
-## Important Note
+### Local Development
 
-This version uses mock data and does not connect to any backend. All data is stored locally in the device memory.
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/prthamesh-pr/Game.git
+   cd Game/frontend_andriod
+   ```
+
+2. **Install dependencies:**
+   ```bash
+   flutter pub get
+   ```
+
+3. **Run for mobile:**
+   ```bash
+   flutter run
+   ```
+
+4. **Run for web:**
+   ```bash
+   flutter run -d chrome
+   ```
+
+### Building for Production
+
+**Build for Web:**
+```bash
+flutter build web --release
+```
+
+**Build for Android:**
+```bash
+flutter build apk --release
+```
+
+## Deployment on Vercel
+
+This app is configured for easy deployment on Vercel:
+
+1. **Push to GitHub** (already done)
+2. **Connect Vercel to your GitHub repository**
+3. **Configure build settings** (automatic with vercel.json)
+4. **Deploy** - Vercel will build and deploy automatically
+
+### Manual Vercel Deployment
+
+1. Install Vercel CLI: `npm i -g vercel`
+2. Navigate to project root: `cd frontend_andriod`
+3. Deploy: `vercel --prod`
+
+## Important Notes
+
+- Uses mock data for demonstration purposes
+- All game data is stored locally in browser/device memory
+- Token system is simulated (no real transactions)
+- Responsive design works across all screen sizes

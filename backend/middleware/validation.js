@@ -15,16 +15,20 @@ const rateLimiters = {
     legacyHeaders: false
   }),
 
-  // Authentication rate limit (stricter)
+  // Authentication rate limit (more lenient for development)
   auth: rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 5, // limit each IP to 5 auth requests per windowMs
+    max: 50, // limit each IP to 50 auth requests per windowMs
     message: {
       success: false,
       message: 'Too many authentication attempts, please try again later.'
     },
     standardHeaders: true,
-    legacyHeaders: false
+    legacyHeaders: false,
+    skip: (req) => {
+      // Skip rate limiting in development
+      return process.env.NODE_ENV === 'development';
+    }
   }),
 
   // Game actions rate limit
@@ -57,8 +61,8 @@ const validationRules = {
   // User registration validation
   userRegistration: [
     body('username')
-      .isLength({ min: 3, max: 20 })
-      .withMessage('Username must be between 3 and 20 characters')
+      .isLength({ min: 3, max: 30 })
+      .withMessage('Username must be between 3 and 30 characters')
       .matches(/^[a-zA-Z0-9_]+$/)
       .withMessage('Username can only contain letters, numbers, and underscores'),
     body('mobileNumber')

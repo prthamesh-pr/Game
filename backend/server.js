@@ -95,10 +95,61 @@ const seedAdminUser = async () => {
 };
 
 // Routes
+// Base API route handler to show available routes
+app.get('/api', (req, res) => {
+  res.json({
+    success: true,
+    message: 'Number Game API',
+    version: '1.0.0',
+    availableRoutes: ['/api/auth', '/api/user', '/api/admin', '/api/game'],
+    documentation: '/api/docs'
+  });
+});
+
+// Auth routes - base handler
+app.get('/api/auth', (req, res) => {
+  res.json({
+    success: true,
+    message: 'Auth API routes',
+    availableRoutes: [
+      '/api/auth/register',
+      '/api/auth/login',
+      '/api/auth/admin/login',
+      '/api/auth/refresh',
+      '/api/auth/logout',
+      '/api/auth/verify'
+    ]
+  });
+});
+
+// Main API routes
 app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/game', gameRoutes);
+
+// Health check routes (both /health and /api/health)
+app.get('/health', (req, res) => {
+  res.json({
+    success: true,
+    message: 'Server is healthy',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    memory: process.memoryUsage(),
+    mongodb: mongoose.connection.readyState === 1 ? 'Connected' : 'Disconnected'
+  });
+});
+
+app.get('/api/health', (req, res) => {
+  res.json({
+    success: true,
+    message: 'Server is healthy',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    memory: process.memoryUsage(),
+    mongodb: mongoose.connection.readyState === 1 ? 'Connected' : 'Disconnected'
+  });
+});
 
 // Root route
 app.get('/', (req, res) => {
@@ -115,18 +166,6 @@ app.get('/', (req, res) => {
     },
     status: 'Running',
     environment: process.env.NODE_ENV || 'development'
-  });
-});
-
-// Health check route
-app.get('/health', (req, res) => {
-  res.json({
-    success: true,
-    message: 'Server is healthy',
-    timestamp: new Date().toISOString(),
-    uptime: process.uptime(),
-    memory: process.memoryUsage(),
-    mongodb: mongoose.connection.readyState === 1 ? 'Connected' : 'Disconnected'
   });
 });
 

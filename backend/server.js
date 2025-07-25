@@ -50,9 +50,33 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
-// Body parsing middleware
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+// Body parsing middleware with better error handling
+app.use(express.json({ 
+  limit: '10mb',
+  strict: false,
+  type: 'application/json'
+}));
+app.use(express.urlencoded({ 
+  extended: true, 
+  limit: '10mb' 
+}));
+
+// Custom middleware to handle empty/null JSON bodies
+app.use((req, res, next) => {
+  // Handle empty or null request bodies for JSON content-type
+  if (req.is('application/json') && (req.body === null || req.body === undefined)) {
+    req.body = {};
+  }
+  next();
+});
+
+// Add request debugging middleware for production debugging
+if (process.env.NODE_ENV === 'production') {
+  app.use((req, res, next) => {
+    console.log(`[${new Date().toISOString()}] ${req.method} ${req.path} - Body:`, JSON.stringify(req.body));
+    next();
+  });
+}
 
 // Request logging
 if (process.env.NODE_ENV !== 'production') {
@@ -245,6 +269,15 @@ app.use('*', (req, res) => {
 // Global error handler
 app.use((err, req, res, next) => {
   console.error('Global error handler:', err);
+  
+  // Body parser JSON error
+  if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
+    return res.status(400).json({
+      success: false,
+      message: 'Invalid JSON format in request body',
+      details: 'Please ensure your request contains valid JSON data'
+    });
+  }
   
   // Mongoose validation error
   if (err.name === 'ValidationError') {

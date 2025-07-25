@@ -12,7 +12,11 @@ const rateLimiters = {
       message: 'Too many requests from this IP, please try again later.'
     },
     standardHeaders: true,
-    legacyHeaders: false
+    legacyHeaders: false,
+    skip: (req) => {
+      // Skip rate limiting in development and for testing
+      return process.env.NODE_ENV === 'development' || process.env.DISABLE_RATE_LIMIT === 'true';
+    }
   }),
 
   // Authentication rate limit (more lenient for development)
@@ -26,8 +30,8 @@ const rateLimiters = {
     standardHeaders: true,
     legacyHeaders: false,
     skip: (req) => {
-      // Skip rate limiting in development
-      return process.env.NODE_ENV === 'development';
+      // Skip rate limiting in development and for testing
+      return process.env.NODE_ENV === 'development' || process.env.DISABLE_RATE_LIMIT === 'true';
     }
   }),
 

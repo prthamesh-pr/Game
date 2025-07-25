@@ -388,6 +388,86 @@ const changePassword = async (req, res) => {
   }
 };
 
+/**
+ * Get User Statistics
+ */
+const getUserStats = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    // Get user with basic stats
+    const user = await User.findById(userId).select('-passwordHash');
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Get total selections count
+    const totalSelections = await NumberSelection.countDocuments({ user: userId });
+
+    // Get active selections count
+    const activeSelections = await NumberSelection.countDocuments({ 
+      user: userId, 
+      status: 'active' 
+    });
+
+    // Get total transactions count
+    const totalTransactions = await WalletTransaction.countDocuments({ user: userId });
+
+    // Get recent activity (last 30 days)
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    const recentSelections = await NumberSelection.countDocuments({ 
+      user: userId,
+      createdAt: { $gte: thirtyDaysAgo }
+    });
+
+    // Calculate win rate
+    const winRate = user.gamesPlayed > 0 ? 
+      ((user.totalWinnings / (user.totalWinnings + user.totalLosses)) * 100).toFixed(2) : 0;
+
+    res.json({
+      success: true,
+      message: 'User statistics retrieved successfully',
+      data: {
+        profile: {
+          username: user.username,
+          email: user.email,
+          joinedDate: user.createdAt,
+          lastActive: user.lastLogin
+        },
+        wallet: {
+          currentBalance: user.walletBalance || user.wallet.balance || 0,
+          totalDeposits: user.wallet.totalDeposits || 0,
+          totalWithdrawals: user.wallet.totalWithdrawals || 0
+        },
+        gaming: {
+          totalGames: user.gamesPlayed || 0,
+          totalWinnings: user.totalWinnings || 0,
+          totalLosses: user.totalLosses || 0,
+          winRate: winRate,
+          totalSelections: totalSelections,
+          activeSelections: activeSelections,
+          recentActivity: recentSelections
+        },
+        transactions: {
+          totalTransactions: totalTransactions
+        }
+      }
+    });
+
+  } catch (error) {
+    console.error('Get user stats error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
+  }
+};
+
 module.exports = {
   getUserProfile,
   updateUserProfile,

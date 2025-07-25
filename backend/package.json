@@ -10,6 +10,7 @@
     "fix-mobile-comprehensive": "node scripts/comprehensive-mobile-fix.js",
     "test-auth": "node scripts/test-auth.js",
     "test-api-live": "node scripts/test-api-live.js",
+    "test-api-fixed": "node scripts/test-api-fixed.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [

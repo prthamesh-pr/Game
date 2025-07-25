@@ -508,6 +508,56 @@ const getAllRounds = async (req, res) => {
   }
 };
 
+/**
+ * Get All Game Rounds with Pagination
+ */
+const getAllRounds = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const skip = (page - 1) * limit;
+
+    const rounds = await Result.find()
+      .sort({ createdAt: -1 })
+      .limit(limit)
+      .skip(skip)
+      .select('roundNumber status startTime endTime winningNumbers createdAt');
+
+    const totalRounds = await Result.countDocuments();
+    const totalPages = Math.ceil(totalRounds / limit);
+
+    res.json({
+      success: true,
+      message: "Game rounds retrieved successfully",
+      data: {
+        rounds: rounds.map(round => ({
+          id: round._id,
+          roundNumber: round.roundNumber,
+          status: round.status,
+          startTime: round.startTime,
+          endTime: round.endTime,
+          winningNumbers: round.winningNumbers,
+          createdAt: round.createdAt
+        })),
+        pagination: {
+          currentPage: page,
+          totalPages,
+          totalRounds,
+          hasNextPage: page < totalPages,
+          hasPrevPage: page > 1
+        }
+      }
+    });
+    
+  } catch (error) {
+    console.error("Error fetching all game rounds:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error fetching game rounds"
+    });
+  }
+};
+
 module.exports = {
   selectNumber,
   getCurrentRound,

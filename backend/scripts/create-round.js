@@ -9,8 +9,12 @@ async function createActiveRound() {
     await mongoose.connect(mongoURI);
     console.log('✅ Connected to MongoDB');
 
-    // Check if there's already an active round
-    const existingActiveRound = await Result.findOne({ status: 'active' });
+    // Check if there's already an active round that hasn't expired
+    const currentTime = new Date();
+    const existingActiveRound = await Result.findOne({ 
+      status: 'active',
+      endTime: { $gt: currentTime }
+    });
     if (existingActiveRound) {
       console.log(`✅ Active round already exists: ${existingActiveRound.roundId}`);
       console.log(`   Start: ${existingActiveRound.startTime}`);
@@ -18,6 +22,12 @@ async function createActiveRound() {
       await mongoose.connection.close();
       return;
     }
+
+    // Mark any expired active rounds as completed
+    await Result.updateMany(
+      { status: 'active', endTime: { $lte: currentTime } },
+      { status: 'completed' }
+    );
 
     // Create new round
     const now = new Date();

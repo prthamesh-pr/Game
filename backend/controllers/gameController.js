@@ -63,7 +63,7 @@ const selectNumber = async (req, res) => {
     
     // Check if user has sufficient balance
     const user = await User.findById(userId);
-    if (user.wallet.balance < amount) {
+    if (user.walletBalance < amount) {
       return res.status(400).json({
         success: false,
         message: "Insufficient balance"
@@ -72,8 +72,8 @@ const selectNumber = async (req, res) => {
     
     // Check if number is already selected by this user in current round
     const existingSelection = await NumberSelection.findOne({
-      user: userId,
-      round: currentRound._id,
+      userId: userId,
+      roundId: currentRound.roundId,
       number,
       classType
     });
@@ -87,24 +87,24 @@ const selectNumber = async (req, res) => {
     
     // Create new selection
     const newSelection = new NumberSelection({
-      user: userId,
-      round: currentRound._id,
+      userId: userId,
+      roundId: currentRound.roundId,
       number,
       classType,
       amount,
-      status: "active"
+      status: "pending"
     });
     
     // Deduct amount from user's wallet
-    user.wallet.balance -= amount;
+    user.walletBalance -= amount;
     
     // Create wallet transaction
     const transaction = new WalletTransaction({
       user: userId,
       amount: -amount,
       type: "bet",
-      description: `Bet placed for number ${number} in round ${currentRound.roundNumber}`,
-      balanceAfter: user.wallet.balance,
+      description: `Bet placed for number ${number} in round ${currentRound.roundId}`,
+      balanceAfter: user.walletBalance,
       relatedEntity: {
         type: "selection",
         id: newSelection._id
@@ -127,10 +127,10 @@ const selectNumber = async (req, res) => {
           number,
           classType,
           amount,
-          roundNumber: currentRound.roundNumber,
+          roundId: currentRound.roundId,
           createdAt: newSelection.createdAt
         },
-        walletBalance: user.wallet.balance
+        walletBalance: user.walletBalance
       }
     });
     

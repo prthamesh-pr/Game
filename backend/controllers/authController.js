@@ -112,6 +112,8 @@ const registerUser = async (req, res) => {
  */
 const loginUser = async (req, res) => {
   try {
+    // Debug: print incoming request body
+    console.log('🔍 [loginUser] Incoming body:', req.body);
     // Accept both 'identifier' and 'email' for backward compatibility
     const { identifier, email, password } = req.body; 
     const loginIdentifier = identifier || email;

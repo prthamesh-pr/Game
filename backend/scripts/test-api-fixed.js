@@ -22,7 +22,7 @@ const testUser = {
 };
 
 const testAdmin = {
-  email: 'admin@numbergame.com',
+  email: '963sohamraut@gmail.com',
   password: 'Admin@123'
 };
 

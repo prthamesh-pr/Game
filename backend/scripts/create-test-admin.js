@@ -14,16 +14,16 @@ async function createTestAdmin() {
     console.log('✅ Connected to MongoDB');
 
     // Remove existing test admin
-    await Admin.deleteOne({ email: 'admin@numbergame.com' });
+    await Admin.deleteOne({ email: '963sohamraut@gmail.com' });
     console.log('🗑️  Removed existing admin');
 
-    // Create new admin
+    // Create new admin with the requested email
     const adminPassword = await bcrypt.hash('Admin@123', 12);
     
     const admin = new Admin({
-      email: 'admin@numbergame.com',
+      email: '963sohamraut@gmail.com',
       passwordHash: adminPassword,
-      fullName: 'Test Administrator',
+      fullName: 'Soham Raut',
       role: 'super-admin',
       permissions: {
         canManageUsers: true,
@@ -36,13 +36,14 @@ async function createTestAdmin() {
 
     await admin.save();
     console.log('✅ Test admin created successfully');
-    console.log('📧 Email: admin@numbergame.com');
+    console.log('📧 Email: 963sohamraut@gmail.com');
     console.log('🔑 Password: Admin@123');
 
     // Test login
-    const testAdmin = await Admin.findByCredentials('admin@numbergame.com', 'Admin@123');
+    const testAdmin = await Admin.findByCredentials('963sohamraut@gmail.com', 'Admin@123');
     console.log('✅ Admin login test successful');
     console.log('👤 Admin ID:', testAdmin._id);
+    console.log('👤 Admin Name:', testAdmin.fullName);
 
   } catch (error) {
     console.error('❌ Error creating test admin:', error.message);

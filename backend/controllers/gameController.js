@@ -539,6 +539,11 @@ const getCurrentSelections = async (req, res) => {
   }
 };
 
+/**
+ * Get All Game Rounds with Pagination
+ */
+const getAllRounds = async (req, res) => {
+
 module.exports = {
   selectNumber,
   getCurrentRound,
@@ -549,11 +554,6 @@ module.exports = {
   getCurrentSelections,
   getAllRounds
 };
-
-/**
- * Get All Game Rounds with Pagination
- */
-const getAllRounds = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;

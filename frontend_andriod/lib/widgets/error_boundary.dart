@@ -3,12 +3,8 @@ import 'package:flutter/material.dart';
 class ErrorBoundary extends StatefulWidget {
   final Widget child;
   final Widget? fallback;
-  
-  const ErrorBoundary({
-    super.key,
-    required this.child,
-    this.fallback,
-  });
+
+  const ErrorBoundary({super.key, required this.child, this.fallback});
 
   @override
   State<ErrorBoundary> createState() => _ErrorBoundaryState();
@@ -35,26 +31,17 @@ class _ErrorBoundaryState extends State<ErrorBoundary> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(
-                Icons.error_outline,
-                size: 64,
-                color: Colors.red,
-              ),
+              const Icon(Icons.error_outline, size: 64, color: Colors.red),
               const SizedBox(height: 16),
               const Text(
                 'Something went wrong',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
               Text(
                 _errorMessage ?? 'An unexpected error occurred',
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Colors.grey[600],
-                ),
+                style: TextStyle(color: Colors.grey[600]),
               ),
               const SizedBox(height: 24),
               ElevatedButton(
@@ -84,24 +71,11 @@ class _ErrorBoundaryState extends State<ErrorBoundary> {
     }
   }
 
-  void _handleError(dynamic error, StackTrace? stackTrace) {
-    setState(() {
-      _hasError = true;
-      _errorMessage = error.toString();
-    });
-    
-    // Log the error for debugging
-    debugPrint('ErrorBoundary caught error: $error');
-    debugPrint('StackTrace: $stackTrace');
-  }
 }
 
 // Extension to wrap any widget with error boundary
 extension ErrorBoundaryExtension on Widget {
   Widget withErrorBoundary({Widget? fallback}) {
-    return ErrorBoundary(
-      fallback: fallback,
-      child: this,
-    );
+    return ErrorBoundary(fallback: fallback, child: this);
   }
 }

@@ -23,6 +23,39 @@ class _ResultsScreenState extends State<ResultsScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+
+    // Add listener to refresh results when tab changes
+    _tabController.addListener(() {
+      if (!_tabController.indexIsChanging) {
+        _refreshCurrentTabResults();
+      }
+    });
+
+    // Fetch results when screen loads
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _refreshCurrentTabResults();
+    });
+  }
+
+  void _refreshCurrentTabResults() {
+    final gameProvider = Provider.of<GameProvider>(context, listen: false);
+    String classType = '';
+
+    switch (_tabController.index) {
+      case 0:
+        classType = 'A';
+        break;
+      case 1:
+        classType = 'B';
+        break;
+      case 2:
+        classType = 'C';
+        break;
+    }
+
+    if (classType.isNotEmpty) {
+      gameProvider.fetchGameResultsByClass(classType);
+    }
   }
 
   @override
@@ -131,17 +164,56 @@ class _ResultsScreenState extends State<ResultsScreen>
   }
 
   Widget _buildResultsList(String gameClass, GameProvider gameProvider) {
-    final results = gameProvider.getGameResultsByClass(gameClass);
+    return FutureBuilder<List<GameResult>>(
+      // Use the new API method that fetches from backend
+      future: gameProvider.fetchGameResultsByClass(gameClass),
+      builder: (context, snapshot) {
+        // Show loading indicator while waiting for API response
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: LoadingSpinner());
+        }
 
-    if (results.isEmpty) {
-      return const Center(child: Text('No results available for this class'));
-    }
+        // Handle error state
+        if (snapshot.hasError) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.error_outline, color: Colors.red, size: 48),
+                const SizedBox(height: 16),
+                Text('Error loading results: ${snapshot.error}'),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () {
+                    setState(() {
+                      // Force refresh
+                      gameProvider.fetchGameResultsByClass(gameClass);
+                    });
+                  },
+                  child: const Text('Try Again'),
+                ),
+              ],
+            ),
+          );
+        }
 
-    return ListView.builder(
-      itemCount: results.length,
-      padding: const EdgeInsets.all(16),
-      itemBuilder: (context, index) {
-        return _buildResultItem(results[index], gameClass);
+        // Get results from snapshot or provider
+        final results =
+            snapshot.data ?? gameProvider.getGameResultsByClass(gameClass);
+
+        if (results.isEmpty) {
+          return const Center(
+            child: Text('No results available for this class'),
+          );
+        }
+
+        return ListView.builder(
+          itemCount: results.length,
+          padding: const EdgeInsets.all(16),
+          itemBuilder: (context, index) {
+            return _buildResultItem(results[index], gameClass);
+          },
+        );
       },
     );
   }

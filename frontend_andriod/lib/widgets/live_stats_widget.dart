@@ -28,18 +28,12 @@ class _AnimatedCounterState extends State<AnimatedCounter>
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
-      duration: widget.duration,
-      vsync: this,
-    );
+    _controller = AnimationController(duration: widget.duration, vsync: this);
 
     _animation = Tween<double>(
       begin: 0,
       end: widget.targetValue.toDouble(),
-    ).animate(CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeOutCubic,
-    ));
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
 
     _controller.forward();
   }
@@ -57,11 +51,13 @@ class _AnimatedCounterState extends State<AnimatedCounter>
       builder: (context, child) {
         return Text(
           '${_animation.value.toInt()}${widget.suffix}',
-          style: widget.textStyle ?? GoogleFonts.poppins(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            color: AppColors.textPrimary,
-          ),
+          style:
+              widget.textStyle ??
+              GoogleFonts.poppins(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textPrimary,
+              ),
         );
       },
     );
@@ -79,7 +75,7 @@ class _LiveStatsWidgetState extends State<LiveStatsWidget>
     with TickerProviderStateMixin {
   late AnimationController _pulseController;
   late Animation<double> _pulseAnimation;
-  
+
   int _onlineUsers = 1247;
   int _activeGames = 89;
 
@@ -91,13 +87,9 @@ class _LiveStatsWidgetState extends State<LiveStatsWidget>
       vsync: this,
     );
 
-    _pulseAnimation = Tween<double>(
-      begin: 0.8,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _pulseController,
-      curve: Curves.easeInOut,
-    ));
+    _pulseAnimation = Tween<double>(begin: 0.8, end: 1.0).animate(
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+    );
 
     _pulseController.repeat(reverse: true);
     _startLiveUpdates();
@@ -202,7 +194,12 @@ class _LiveStatsWidgetState extends State<LiveStatsWidget>
     );
   }
 
-  Widget _buildLiveStatItem(String label, int value, IconData icon, Color color) {
+  Widget _buildLiveStatItem(
+    String label,
+    int value,
+    IconData icon,
+    Color color,
+  ) {
     return Column(
       children: [
         Icon(icon, color: color, size: 24),

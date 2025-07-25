@@ -6,6 +6,7 @@ import '../providers/auth_provider.dart';
 import '../widgets/loading_spinner.dart';
 
 import 'main_screen.dart';
+import 'register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -176,16 +177,28 @@ class _LoginScreenState extends State<LoginScreen> {
                       ],
                     ),
                   const SizedBox(height: 16),
-                  const Text(
-                    'This is a mock version with no backend connection.',
-                    style: TextStyle(color: AppColors.textLight, fontSize: 12),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'Any username and password will work.',
-                    style: TextStyle(color: AppColors.textLight, fontSize: 12),
-                    textAlign: TextAlign.center,
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Text("Don't have an account?"),
+                      TextButton(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const RegisterScreen(),
+                            ),
+                          );
+                        },
+                        child: const Text(
+                          'Register',
+                          style: TextStyle(
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),

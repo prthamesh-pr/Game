@@ -1,11 +1,11 @@
 {
-    "name": "Game 999",
-    "short_name": "Game 999",
+    "name": "frontend_android",
+    "short_name": "frontend_android",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#FF6B35",
-    "theme_color": "#D32F2F",
-    "description": "Game 999 - Play Smart, Win Big!",
+    "background_color": "#0175C2",
+    "theme_color": "#0175C2",
+    "description": "A new Flutter project.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

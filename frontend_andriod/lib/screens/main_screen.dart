@@ -38,6 +38,7 @@ class _MainScreenState extends State<MainScreen> {
         onTap: _onTabTapped,
       ),
       extendBody: true, // Important for curved navigation bar to work properly
+      backgroundColor: const Color(0xFFF8F9FA), // Light background
     );
   }
 }

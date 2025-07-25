@@ -66,8 +66,13 @@ const validationRules = {
       .matches(/^[a-zA-Z0-9_]+$/)
       .withMessage('Username can only contain letters, numbers, and underscores'),
     body('mobileNumber')
+      .optional()
       .matches(/^[6-9]\d{9}$/)
       .withMessage('Please enter a valid 10-digit mobile number'),
+    body('email')
+      .isEmail()
+      .withMessage('Please enter a valid email address')
+      .normalizeEmail(),
     body('password')
       .isLength({ min: 6 })
       .withMessage('Password must be at least 6 characters')
@@ -79,7 +84,7 @@ const validationRules = {
   userLogin: [
     body('identifier')
       .notEmpty()
-      .withMessage('Mobile number or username is required'),
+      .withMessage('Email, mobile number or username is required'),
     body('password')
       .notEmpty()
       .withMessage('Password is required')

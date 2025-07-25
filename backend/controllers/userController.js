@@ -21,20 +21,20 @@ const getUserProfile = async (req, res) => {
     res.json({
       success: true,
       message: 'Profile retrieved successfully',
-      data: {
-        user: {
-          id: user._id,
-          username: user.username,
-          mobileNumber: user.mobileNumber,
-          wallet: user.wallet,
-          selectedNumbers: user.selectedNumbers,
-          totalWinnings: user.totalWinnings,
-          totalLosses: user.totalLosses,
-          gamesPlayed: user.gamesPlayed,
-          winLossRatio: user.winLossRatio,
-          createdAt: user.createdAt,
-          lastLogin: user.lastLogin
-        }
+      user: {
+        id: user._id,
+        username: user.username,
+        email: user.email,
+        mobileNumber: user.mobileNumber,
+        walletBalance: user.walletBalance || user.wallet,
+        isGuest: user.isGuest || false,
+        selectedNumbers: user.selectedNumbers,
+        totalWinnings: user.totalWinnings,
+        totalLosses: user.totalLosses,
+        gamesPlayed: user.gamesPlayed,
+        winLossRatio: user.winLossRatio,
+        createdAt: user.createdAt,
+        lastLogin: user.lastLogin
       }
     });
 
@@ -52,7 +52,7 @@ const getUserProfile = async (req, res) => {
  */
 const updateUserProfile = async (req, res) => {
   try {
-    const { username } = req.body;
+    const { username, email } = req.body;
     const userId = req.user.id;
 
     // Check if username is already taken by another user
@@ -69,18 +69,42 @@ const updateUserProfile = async (req, res) => {
         });
       }
     }
+    
+    // Check if email is already taken by another user
+    if (email) {
+      const existingUser = await User.findOne({
+        email: email,
+        _id: { $ne: userId }
+      });
+
+      if (existingUser) {
+        return res.status(400).json({
+          success: false,
+          message: 'Email already taken'
+        });
+      }
+    }
+
+    const updateData = {};
+    if (username) updateData.username = username;
+    if (email) updateData.email = email;
 
     const updatedUser = await User.findByIdAndUpdate(
       userId,
-      { username },
+      updateData,
       { new: true, runValidators: true }
     ).select('-passwordHash');
 
     res.json({
       success: true,
       message: 'Profile updated successfully',
-      data: {
-        user: updatedUser
+      user: {
+        id: updatedUser._id,
+        username: updatedUser.username,
+        email: updatedUser.email,
+        mobileNumber: updatedUser.mobileNumber,
+        walletBalance: updatedUser.walletBalance || updatedUser.wallet,
+        isGuest: updatedUser.isGuest || false
       }
     });
 

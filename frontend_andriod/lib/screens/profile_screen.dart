@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../constants/colors.dart';
 import '../providers/auth_provider.dart';
-import '../providers/game_provider.dart';
 import '../widgets/custom_appbar.dart';
 import '../widgets/loading_spinner.dart';
 import '../utils/utils.dart';
 import 'login_screen.dart';
+import 'transactions_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -32,10 +32,10 @@ class ProfileScreen extends StatelessWidget {
               builder: (context, constraints) {
                 final screenWidth = constraints.maxWidth;
                 final isLargeScreen = screenWidth > 768;
-                final contentWidth = isLargeScreen 
+                final contentWidth = isLargeScreen
                     ? (screenWidth > 1200 ? 800.0 : screenWidth * 0.7)
                     : screenWidth;
-                
+
                 return Scrollbar(
                   thumbVisibility: true,
                   trackVisibility: true,
@@ -46,7 +46,8 @@ class ProfileScreen extends StatelessWidget {
                         width: contentWidth,
                         constraints: BoxConstraints(
                           maxWidth: 800,
-                          minHeight: constraints.maxHeight - (isLargeScreen ? 64 : 32),
+                          minHeight:
+                              constraints.maxHeight - (isLargeScreen ? 64 : 32),
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.center,
@@ -83,7 +84,11 @@ class ProfileScreen extends StatelessWidget {
                             SizedBox(height: isLargeScreen ? 50 : 40),
                             _buildInfoCard(context, user, isLargeScreen),
                             SizedBox(height: isLargeScreen ? 32 : 24),
-                            _buildActionButtons(context, authProvider, isLargeScreen),
+                            _buildActionButtons(
+                              context,
+                              authProvider,
+                              isLargeScreen,
+                            ),
                             SizedBox(height: isLargeScreen ? 40 : 20),
                           ],
                         ),
@@ -118,7 +123,7 @@ class ProfileScreen extends StatelessWidget {
           Text(
             'Account Information',
             style: TextStyle(
-              fontSize: isLargeScreen ? 22 : 18, 
+              fontSize: isLargeScreen ? 22 : 18,
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -157,7 +162,7 @@ class ProfileScreen extends StatelessWidget {
             child: Text(
               value,
               style: TextStyle(
-                fontSize: isLargeScreen ? 18 : 16, 
+                fontSize: isLargeScreen ? 18 : 16,
                 fontWeight: FontWeight.w500,
               ),
               textAlign: TextAlign.right,
@@ -168,35 +173,40 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildActionButtons(BuildContext context, AuthProvider authProvider, bool isLargeScreen) {
-    final gameProvider = Provider.of<GameProvider>(context);
+  Widget _buildActionButtons(
+    BuildContext context,
+    AuthProvider authProvider,
+    bool isLargeScreen,
+  ) {
     final user = authProvider.currentUser;
 
     return Column(
       children: [
         _buildActionButton(
-          icon: Icons.add_card,
-          label: 'Add Tokens (Mock)',
-          color: AppColors.success,
+          icon: Icons.refresh,
+          label: 'Refresh Profile',
+          color: AppColors.info,
           isLargeScreen: isLargeScreen,
           onTap: () async {
             if (user != null) {
-              await authProvider.updateWalletBalance(500);
-              Utils.showToast('Added 500 Tokens (Mock)');
+              await authProvider.refreshWalletBalance();
+              Utils.showToast('Profile refreshed successfully');
             }
           },
         ),
         SizedBox(height: isLargeScreen ? 16 : 12),
         _buildActionButton(
-          icon: Icons.refresh,
-          label: 'Reset Mock Data',
-          color: AppColors.warning,
+          icon: Icons.account_balance_wallet,
+          label: 'View Transactions',
+          color: AppColors.primary,
           isLargeScreen: isLargeScreen,
           onTap: () async {
-            if (user != null) {
-              await gameProvider.resetMockData(user.id);
-              Utils.showToast('Mock data has been reset');
-            }
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const TransactionsScreen(),
+              ),
+            );
           },
         ),
         SizedBox(height: isLargeScreen ? 16 : 12),

@@ -5,7 +5,7 @@ import '../providers/game_provider.dart';
 import '../widgets/custom_appbar.dart';
 import '../widgets/bet_dialog.dart';
 import '../utils/utils.dart';
-import '../utils/mock_data.dart';
+import '../services/game_service.dart';
 
 class GameScreen extends StatefulWidget {
   final String gameClass;
@@ -17,7 +17,9 @@ class GameScreen extends StatefulWidget {
 }
 
 class _GameScreenState extends State<GameScreen> {
-  late List<String> _numbers;
+  late List<String> _numbers = [];
+  final GameService _gameService = GameService();
+  bool _isLoading = true;
 
   @override
   void initState() {
@@ -25,19 +27,31 @@ class _GameScreenState extends State<GameScreen> {
     _loadNumbers();
   }
 
-  void _loadNumbers() {
-    switch (widget.gameClass) {
-      case 'A':
-        _numbers = MockData.getClassANumbers();
-        break;
-      case 'B':
-        _numbers = MockData.getClassBNumbers();
-        break;
-      case 'C':
-        _numbers = MockData.getClassCNumbers();
-        break;
-      default:
-        _numbers = [];
+  Future<void> _loadNumbers() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final response = await _gameService.getValidNumbers(widget.gameClass);
+
+      setState(() {
+        // Convert numbers from API response to List<String>
+        if (response['numbers'] != null) {
+          _numbers = (response['numbers'] as List)
+              .map((n) => n.toString())
+              .toList();
+        } else {
+          _numbers = [];
+        }
+      });
+    } catch (e) {
+      Utils.showToast('Error loading numbers: $e', isError: true);
+      _numbers = [];
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
 
@@ -61,15 +75,14 @@ class _GameScreenState extends State<GameScreen> {
         onBetPlaced: (amount) async {
           // Place bet
           final success = await gameProvider.placeBet(
-            user.id,
-            widget.gameClass,
-            number,
-            amount,
+            gameClass: widget.gameClass,
+            number: number,
+            amount: amount,
+            authProvider: authProvider,
           );
 
           if (success) {
-            // Deduct from wallet
-            await authProvider.updateWalletBalance(-amount);
+            // The wallet balance will be updated by the placeBet method
 
             if (context.mounted) {
               // Show success message but don't navigate away
@@ -87,6 +100,25 @@ class _GameScreenState extends State<GameScreen> {
   }
 
   Widget _buildNumberGrid() {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_numbers.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.error_outline, size: 48, color: Colors.grey),
+            const SizedBox(height: 16),
+            Text('No numbers available for Class ${widget.gameClass}'),
+            const SizedBox(height: 16),
+            ElevatedButton(onPressed: _loadNumbers, child: const Text('Retry')),
+          ],
+        ),
+      );
+    }
+
     return GridView.builder(
       padding: const EdgeInsets.all(16),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(

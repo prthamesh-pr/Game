@@ -16,58 +16,82 @@ class BottomNavigation extends StatelessWidget {
   Widget build(BuildContext context) {
     // Get the bottom padding to ensure we avoid the navigation bar
     final bottomPadding = MediaQuery.of(context).padding.bottom;
+    final labels = ['Home', 'Results', 'History', 'Profile'];
 
-    return CurvedNavigationBar(
-      backgroundColor: Colors.transparent,
-      color: AppColors.primary,
-      buttonBackgroundColor: const Color.fromARGB(255, 191, 112, 32),
-      height: 60 + (bottomPadding / 2), // Adjust for bottom safe area
-      animationDuration: const Duration(milliseconds: 300),
-      index: currentIndex,
-      items: const <Widget>[
-        Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.home, size: 26, color: Colors.white),
-            SizedBox(height: 2),
-            Text('Home', style: TextStyle(fontSize: 10, color: Colors.white70)),
-          ],
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [AppColors.primary.withValues(alpha: 0.9), AppColors.primary],
         ),
-        Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.format_list_numbered, size: 26, color: Colors.white),
-            SizedBox(height: 2),
-            Text(
-              'Results',
-              style: TextStyle(fontSize: 10, color: Colors.white70),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.15),
+            blurRadius: 20,
+            offset: const Offset(0, -5),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          CurvedNavigationBar(
+            backgroundColor: Colors.transparent,
+            color: Colors.transparent,
+            buttonBackgroundColor: AppColors.secondary,
+            height: 60 + (bottomPadding / 4), // Reduced height for labels
+            animationDuration: const Duration(milliseconds: 300),
+            animationCurve: Curves.easeInOut,
+            index: currentIndex,
+            items: <Widget>[
+              _buildNavIcon(Icons.home_rounded, 0),
+              _buildNavIcon(Icons.bar_chart_rounded, 1),
+              _buildNavIcon(Icons.history_rounded, 2),
+              _buildNavIcon(Icons.person_rounded, 3),
+            ],
+            onTap: onTap,
+          ),
+          Container(
+            padding: EdgeInsets.only(
+              bottom: bottomPadding > 0 ? bottomPadding / 2 : 8,
+              top: 4,
             ),
-          ],
-        ),
-        Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.history, size: 26, color: Colors.white),
-            SizedBox(height: 2),
-            Text(
-              'History',
-              style: TextStyle(fontSize: 10, color: Colors.white70),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: labels.asMap().entries.map((entry) {
+                final index = entry.key;
+                final label = entry.value;
+                final isSelected = currentIndex == index;
+
+                return Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: isSelected ? 12 : 11,
+                    color: isSelected
+                        ? Colors.white
+                        : Colors.white.withValues(alpha: 0.7),
+                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                  ),
+                );
+              }).toList(),
             ),
-          ],
-        ),
-        Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.person, size: 26, color: Colors.white),
-            SizedBox(height: 2),
-            Text(
-              'Profile',
-              style: TextStyle(fontSize: 10, color: Colors.white70),
-            ),
-          ],
-        ),
-      ],
-      onTap: onTap,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNavIcon(IconData icon, int index) {
+    final isSelected = currentIndex == index;
+
+    return Container(
+      padding: const EdgeInsets.all(8),
+      child: Icon(
+        icon,
+        size: isSelected ? 28 : 24,
+        color: isSelected ? Colors.white : Colors.white.withValues(alpha: 0.8),
+      ),
     );
   }
 }

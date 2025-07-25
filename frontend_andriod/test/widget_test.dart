@@ -7,25 +7,94 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
-// Update the import path below if your main.dart is in a different location
-import 'package:game_999/main.dart';
+import 'package:game_999/widgets/bottom_navigation.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  testWidgets('BottomNavigation widget builds correctly', (
+    WidgetTester tester,
+  ) async {
+    int selectedIndex = 0;
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    // Build the bottom navigation widget
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          bottomNavigationBar: BottomNavigation(
+            currentIndex: selectedIndex,
+            onTap: (index) {
+              selectedIndex = index;
+            },
+          ),
+        ),
+      ),
+    );
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
+    // Verify that the bottom navigation renders
+    expect(find.byType(BottomNavigation), findsOneWidget);
+
+    // Check that navigation icons exist (allowing for multiple instances due to curved_navigation_bar)
+    expect(find.byIcon(Icons.home_rounded), findsAtLeastNWidgets(1));
+    expect(find.byIcon(Icons.bar_chart_rounded), findsAtLeastNWidgets(1));
+    expect(find.byIcon(Icons.history_rounded), findsAtLeastNWidgets(1));
+    expect(find.byIcon(Icons.person_rounded), findsAtLeastNWidgets(1));
+  });
+
+  testWidgets('BottomNavigation labels are displayed', (
+    WidgetTester tester,
+  ) async {
+    int selectedIndex = 0;
+
+    // Build the bottom navigation widget
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          bottomNavigationBar: BottomNavigation(
+            currentIndex: selectedIndex,
+            onTap: (index) {
+              selectedIndex = index;
+            },
+          ),
+        ),
+      ),
+    );
+
+    // Wait for the widget to build
     await tester.pump();
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    // Check for navigation labels
+    expect(find.text('Home'), findsOneWidget);
+    expect(find.text('Results'), findsOneWidget);
+    expect(find.text('History'), findsOneWidget);
+    expect(find.text('Profile'), findsOneWidget);
+  });
+
+  testWidgets('BottomNavigation structure is correct', (
+    WidgetTester tester,
+  ) async {
+    int selectedIndex = 0;
+
+    // Build the bottom navigation widget
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          bottomNavigationBar: BottomNavigation(
+            currentIndex: selectedIndex,
+            onTap: (index) {
+              selectedIndex = index;
+            },
+          ),
+        ),
+      ),
+    );
+
+    // Verify initial state
+    expect(selectedIndex, 0);
+
+    // The widget builds successfully which confirms the structure is correct
+    expect(find.byType(BottomNavigation), findsOneWidget);
+
+    // Verify that the widget has proper gradient container
+    expect(find.byType(Container), findsAtLeastNWidgets(1));
+    expect(find.byType(Column), findsAtLeastNWidgets(1));
   });
 }

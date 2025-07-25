@@ -8,7 +8,7 @@ class BetDialog extends StatefulWidget {
   final String selectedNumber;
   final String gameClass;
   final double walletBalance;
-  final Function(double) onBetPlaced;
+  final Future<void> Function(double) onBetPlaced;
 
   const BetDialog({
     super.key,
@@ -25,6 +25,7 @@ class BetDialog extends StatefulWidget {
 class _BetDialogState extends State<BetDialog> {
   final TextEditingController _amountController = TextEditingController();
   String? _errorText;
+  bool _isProcessing = false;
 
   @override
   void dispose() {
@@ -164,14 +165,35 @@ class _BetDialogState extends State<BetDialog> {
                   child: const Text('Cancel'),
                 ),
                 ElevatedButton(
-                  onPressed: () {
-                    _validateAmount();
-                    if (_errorText == null) {
-                      final amount = double.parse(_amountController.text);
-                      widget.onBetPlaced(amount);
-                      Navigator.pop(context);
-                    }
-                  },
+                  onPressed: _isProcessing
+                      ? null
+                      : () async {
+                          _validateAmount();
+                          if (_errorText == null) {
+                            setState(() {
+                              _isProcessing = true;
+                            });
+
+                            try {
+                              final amount = double.parse(
+                                _amountController.text,
+                              );
+                              await widget.onBetPlaced(amount);
+
+                              if (mounted) {
+                                Navigator.pop(context);
+                              }
+                            } catch (e) {
+                              Utils.showToast(
+                                'Error placing bet: $e',
+                                isError: true,
+                              );
+                              setState(() {
+                                _isProcessing = false;
+                              });
+                            }
+                          }
+                        },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.success,
                     padding: const EdgeInsets.symmetric(
@@ -182,10 +204,22 @@ class _BetDialogState extends State<BetDialog> {
                       borderRadius: BorderRadius.circular(10),
                     ),
                   ),
-                  child: const Text(
-                    'Place Bet',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
+                  child: _isProcessing
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 3,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Text(
+                          'Place Bet',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                 ),
               ],
             ),

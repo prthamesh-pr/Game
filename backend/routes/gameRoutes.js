@@ -1,6 +1,7 @@
 const express = require('express');
 const { authMiddleware, optionalAuth } = require('../middleware/authMiddleware');
 const { validationRules, handleValidationErrors, rateLimiters } = require('../middleware/validation');
+const { body } = require('express-validator');
 const {
   selectNumber,
   getCurrentRound,
@@ -107,6 +108,22 @@ router.delete('/selections/:selectionId', [
   validationRules.mongoId,
   handleValidationErrors
 ], cancelSelection);
+
+/**
+ * @route   POST /api/game/cancel
+ * @desc    Cancel a number selection by ID in request body (alias for DELETE /selections/:id)
+ * @access  Private (User)
+ */
+router.post('/cancel', [
+  authMiddleware,
+  rateLimiters.game,
+  body('selectionId').isMongoId().withMessage('Invalid selection ID'),
+  handleValidationErrors
+], (req, res) => {
+  // Extract selectionId from body and call cancelSelection
+  req.params.selectionId = req.body.selectionId;
+  return cancelSelection(req, res);
+});
 
 /**
  * @route   GET /api/game/selections/current

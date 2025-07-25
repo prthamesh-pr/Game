@@ -60,9 +60,9 @@ class DashboardLoadingShimmer extends StatelessWidget {
               ),
             ),
           ),
-          
+
           const SizedBox(height: 30),
-          
+
           // Stats section shimmer
           const LoadingShimmer(width: 120, height: 20),
           const SizedBox(height: 15),
@@ -97,26 +97,29 @@ class DashboardLoadingShimmer extends StatelessWidget {
               ),
             ],
           ),
-          
+
           const SizedBox(height: 30),
-          
+
           // Game classes shimmer
           const LoadingShimmer(width: 140, height: 20),
           const SizedBox(height: 15),
-          ...List.generate(3, (index) => Padding(
-            padding: const EdgeInsets.only(bottom: 15),
-            child: Container(
-              height: 200,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(20),
-                color: Colors.grey[200],
-              ),
-              child: const LoadingShimmer(
-                width: double.infinity,
-                height: double.infinity,
+          ...List.generate(
+            3,
+            (index) => Padding(
+              padding: const EdgeInsets.only(bottom: 15),
+              child: Container(
+                height: 200,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(20),
+                  color: Colors.grey[200],
+                ),
+                child: const LoadingShimmer(
+                  width: double.infinity,
+                  height: double.infinity,
+                ),
               ),
             ),
-          )),
+          ),
         ],
       ),
     );

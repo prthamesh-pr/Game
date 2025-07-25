@@ -40,26 +40,17 @@ class _AnimatedCardState extends State<AnimatedCard>
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
-      duration: widget.duration,
-      vsync: this,
-    );
+    _controller = AnimationController(duration: widget.duration, vsync: this);
 
     _scaleAnimation = Tween<double>(
       begin: 1.0,
       end: 0.95,
-    ).animate(CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeInOut,
-    ));
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
 
     _elevationAnimation = Tween<double>(
       begin: widget.elevation,
       end: widget.elevation + 5,
-    ).animate(CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeInOut,
-    ));
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
   }
 
   @override
@@ -97,7 +88,8 @@ class _AnimatedCardState extends State<AnimatedCard>
             margin: widget.margin,
             decoration: BoxDecoration(
               borderRadius: widget.borderRadius ?? BorderRadius.circular(12),
-              boxShadow: widget.boxShadow ??
+              boxShadow:
+                  widget.boxShadow ??
                   [
                     BoxShadow(
                       color: Colors.black.withValues(alpha: 0.1),
@@ -113,10 +105,7 @@ class _AnimatedCardState extends State<AnimatedCard>
                 onTapDown: widget.onTap != null ? _onTapDown : null,
                 onTapUp: widget.onTap != null ? _onTapUp : null,
                 onTapCancel: widget.onTap != null ? _onTapCancel : null,
-                child: Container(
-                  padding: widget.padding,
-                  child: widget.child,
-                ),
+                child: Container(padding: widget.padding, child: widget.child),
               ),
             ),
           ),
@@ -165,18 +154,12 @@ class _FloatingActionIconState extends State<FloatingActionIcon>
     _rotationAnimation = Tween<double>(
       begin: 0,
       end: 0.1,
-    ).animate(CurvedAnimation(
-      parent: _controller,
-      curve: Curves.elasticOut,
-    ));
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.elasticOut));
 
     _scaleAnimation = Tween<double>(
       begin: 1.0,
       end: 1.1,
-    ).animate(CurvedAnimation(
-      parent: _controller,
-      curve: Curves.elasticOut,
-    ));
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.elasticOut));
   }
 
   @override
@@ -216,8 +199,10 @@ class _FloatingActionIconState extends State<FloatingActionIcon>
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: (widget.backgroundColor ?? Theme.of(context).primaryColor)
-                        .withValues(alpha: 0.3),
+                    color:
+                        (widget.backgroundColor ??
+                                Theme.of(context).primaryColor)
+                            .withValues(alpha: 0.3),
                     blurRadius: 15,
                     offset: const Offset(0, 8),
                   ),
@@ -269,18 +254,12 @@ class _PulsingWidgetState extends State<PulsingWidget>
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
-      duration: widget.duration,
-      vsync: this,
-    );
+    _controller = AnimationController(duration: widget.duration, vsync: this);
 
     _scaleAnimation = Tween<double>(
       begin: widget.minScale,
       end: widget.maxScale,
-    ).animate(CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeInOut,
-    ));
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
 
     _controller.repeat(reverse: true);
   }

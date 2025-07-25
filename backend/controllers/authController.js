@@ -8,13 +8,14 @@ const { isValidMobile, isValidUsername } = require('../utils/numberUtils');
  */
 const registerUser = async (req, res) => {
   try {
-    const { username, mobileNumber, password } = req.body;
+    const { username, mobileNumber, email, password } = req.body;
 
     // Check if user already exists
     const existingUser = await User.findOne({
       $or: [
         { username: username },
-        { mobileNumber: mobileNumber }
+        { email: email },
+        ...(mobileNumber ? [{ mobileNumber: mobileNumber }] : [])
       ]
     });
 
@@ -23,6 +24,8 @@ const registerUser = async (req, res) => {
         success: false,
         message: existingUser.username === username 
           ? 'Username already exists' 
+          : existingUser.email === email
+          ? 'Email already registered'
           : 'Mobile number already registered'
       });
     }
@@ -35,17 +38,27 @@ const registerUser = async (req, res) => {
       });
     }
 
-    if (!isValidMobile(mobileNumber)) {
+    if (mobileNumber && !isValidMobile(mobileNumber)) {
       return res.status(400).json({
         success: false,
         message: 'Please enter a valid 10-digit mobile number starting with 6, 7, 8, or 9'
+      });
+    }
+    
+    // Validate email format
+    const emailRegex = /^\S+@\S+\.\S+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please enter a valid email address'
       });
     }
 
     // Create new user
     const user = new User({
       username,
-      mobileNumber,
+      email,
+      ...(mobileNumber && { mobileNumber }),
       passwordHash: password // Will be hashed by pre-save middleware
     });
 
@@ -60,16 +73,17 @@ const registerUser = async (req, res) => {
     res.status(201).json({
       success: true,
       message: 'User registered successfully',
-      data: {
-        user: {
-          id: user._id,
-          username: user.username,
-          mobileNumber: user.mobileNumber,
-          wallet: user.wallet,
-          role: user.role
-        },
-        token
-      }
+      user: {
+        id: user._id,
+        username: user.username,
+        email: user.email,
+        mobileNumber: user.mobileNumber,
+        walletBalance: user.walletBalance || user.wallet,
+        isGuest: user.isGuest || false,
+        role: user.role
+      },
+      token,
+      refreshToken: token // For simplicity, using same token as refresh token
     });
 
   } catch (error) {
@@ -86,10 +100,12 @@ const registerUser = async (req, res) => {
  */
 const loginUser = async (req, res) => {
   try {
-    const { identifier, password } = req.body; // identifier can be username or mobile
+    // Accept both 'identifier' and 'email' for backward compatibility
+    const { identifier, email, password } = req.body; 
+    const loginIdentifier = identifier || email;
 
     // Find user by credentials
-    const user = await User.findByCredentials(identifier, password);
+    const user = await User.findByCredentials(loginIdentifier, password);
 
     // Generate JWT token
     const token = generateToken(user._id, 'user');
@@ -100,20 +116,21 @@ const loginUser = async (req, res) => {
     res.json({
       success: true,
       message: 'Login successful',
-      data: {
-        user: {
-          id: user._id,
-          username: user.username,
-          mobileNumber: user.mobileNumber,
-          wallet: user.wallet,
-          role: user.role,
-          selectedNumbers: user.selectedNumbers,
-          totalWinnings: user.totalWinnings,
-          totalLosses: user.totalLosses,
-          gamesPlayed: user.gamesPlayed
-        },
-        token
-      }
+      user: {
+        id: user._id,
+        username: user.username,
+        email: user.email,
+        mobileNumber: user.mobileNumber,
+        walletBalance: user.walletBalance || user.wallet,
+        isGuest: user.isGuest || false,
+        role: user.role,
+        selectedNumbers: user.selectedNumbers,
+        totalWinnings: user.totalWinnings,
+        totalLosses: user.totalLosses,
+        gamesPlayed: user.gamesPlayed
+      },
+      token,
+      refreshToken: token // For simplicity, using same token as refresh token
     });
 
   } catch (error) {
@@ -122,7 +139,7 @@ const loginUser = async (req, res) => {
     if (error.message === 'Invalid credentials') {
       return res.status(401).json({
         success: false,
-        message: 'Invalid mobile number/username or password'
+        message: 'Invalid email/mobile number/username or password'
       });
     }
 

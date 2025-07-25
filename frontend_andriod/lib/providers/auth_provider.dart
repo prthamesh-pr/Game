@@ -1,18 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:convert';
 
 import '../models/user_model.dart';
-import '../utils/mock_data.dart';
-import '../utils/utils.dart';
-import '../constants/app_constants.dart';
+import '../services/auth_service.dart';
+import '../services/user_service.dart';
 
 class AuthProvider with ChangeNotifier {
   User? _currentUser;
   bool _isLoading = false;
   bool _isLoggedIn = false;
   bool _isInitialized = false;
+
+  // Services
+  final AuthService _authService = AuthService();
+  final UserService _userService = UserService();
 
   User? get currentUser => _currentUser;
   bool get isLoading => _isLoading;
@@ -40,31 +42,43 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
-  // Load user data from shared preferences with robust error handling
+  // Verify token in background
+  Future<void> _verifyTokenInBackground() async {
+    try {
+      final isAuthenticated = await _authService.isAuthenticated();
+      if (!isAuthenticated) {
+        // If token is invalid, log out
+        await logout();
+      } else {
+        // Refresh user profile data
+        try {
+          final user = await _userService.getUserProfile();
+          _currentUser = user;
+          notifyListeners();
+        } catch (e) {
+          debugPrint('Background profile refresh error: $e');
+        }
+      }
+    } catch (e) {
+      debugPrint('Token verification error: $e');
+    }
+  }
+
+  // Load user data from shared preferences
   Future<void> _loadUserData() async {
     try {
       _isLoading = true;
       if (_isInitialized) notifyListeners();
 
-      // Use a timeout for SharedPreferences to prevent hanging
-      final prefs = await SharedPreferences.getInstance()
-          .timeout(const Duration(seconds: 5));
-      
-      final isLoggedIn = prefs.getBool(AppConstants.isLoggedInKey) ?? false;
+      // Load user from auth service
+      final user = await _authService.loadUserData();
 
-      if (isLoggedIn) {
-        final userData = prefs.getString(AppConstants.userKey);
-        if (userData != null && userData.isNotEmpty) {
-          try {
-            final userJson = json.decode(userData);
-            _currentUser = User.fromJson(userJson);
-            _isLoggedIn = true;
-          } catch (e) {
-            debugPrint('Error parsing user data: $e');
-            // Clear corrupted data
-            await _clearUserData();
-          }
-        }
+      if (user != null) {
+        _currentUser = user;
+        _isLoggedIn = true;
+
+        // Verify token validity in background
+        _verifyTokenInBackground();
       }
     } catch (e) {
       debugPrint('Error loading user data: $e');
@@ -77,54 +91,139 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
-  // Clear user data safely
-  Future<void> _clearUserData() async {
-    try {
-      final prefs = await SharedPreferences.getInstance()
-          .timeout(const Duration(seconds: 5));
-      await prefs.remove(AppConstants.isLoggedInKey);
-      await prefs.remove(AppConstants.userKey);
-      _isLoggedIn = false;
-      _currentUser = null;
-    } catch (e) {
-      debugPrint('Error clearing user data: $e');
-    }
-  }
-
-  // Login with mock user
-  Future<bool> login(String username, String password) async {
+  // Login with real API
+  Future<bool> login(String email, String password) async {
     _isLoading = true;
     notifyListeners();
 
     try {
-      // Simulating API call delay
-      await Future.delayed(const Duration(seconds: 2));
-
-      // Mock validation (accept any username/password)
-      if (username.isNotEmpty && password.isNotEmpty) {
-        // Get mock user
-        final mockUser = MockData.getMockUser();
-        _currentUser = mockUser;
-        _isLoggedIn = true;
-
-        // Save to shared preferences
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString(
-          AppConstants.userKey,
-          json.encode(mockUser.toJson()),
-        );
-        await prefs.setBool(AppConstants.isLoggedInKey, true);
-
-        Utils.showToast(AppConstants.loginSuccess);
-        return true;
-      } else {
-        Utils.showToast(AppConstants.loginError, isError: true);
-        return false;
-      }
+      final user = await _authService.login(email, password);
+      _currentUser = user;
+      _isLoggedIn = true;
+      return true;
     } catch (e) {
       debugPrint('Login error: $e');
-      Utils.showToast('An error occurred', isError: true);
       return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  // Register user
+  Future<bool> register(String username, String email, String password) async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      final user = await _authService.register(username, email, password);
+      _currentUser = user;
+      _isLoggedIn = true;
+      return true;
+    } catch (e) {
+      debugPrint('Registration error: $e');
+      return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  // Update profile
+  Future<bool> updateProfile(String username, String email) async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      final user = await _userService.updateUserProfile(username, email);
+      _currentUser = user;
+      return true;
+    } catch (e) {
+      debugPrint('Update profile error: $e');
+      return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  // Update wallet balance from backend
+  Future<bool> refreshWalletBalance() async {
+    try {
+      if (!_isLoggedIn) return false;
+
+      final user = await _userService.getUserProfile();
+      _currentUser = user;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      debugPrint('Refresh wallet error: $e');
+      return false;
+    }
+  }
+
+  // Update wallet balance locally (for guest mode or testing)
+  Future<bool> updateWalletBalance(double amount) async {
+    try {
+      if (!_isLoggedIn || _currentUser == null) return false;
+
+      // Update local balance
+      _currentUser = User(
+        id: _currentUser!.id,
+        username: _currentUser!.username,
+        email: _currentUser!.email,
+        walletBalance: _currentUser!.walletBalance + amount,
+        isGuest: _currentUser!.isGuest,
+      );
+
+      notifyListeners();
+
+      // If not a guest user, try to update on the server as well
+      if (!_currentUser!.isGuest) {
+        await refreshWalletBalance();
+      }
+
+      return true;
+    } catch (e) {
+      debugPrint('Update wallet balance error: $e');
+      return false;
+    }
+  }
+
+  // Change password
+  Future<bool> changePassword(
+    String currentPassword,
+    String newPassword,
+  ) async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      final result = await _userService.changePassword(
+        currentPassword,
+        newPassword,
+      );
+      return result;
+    } catch (e) {
+      debugPrint('Change password error: $e');
+      return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  // Logout
+  Future<void> logout() async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      await _authService.logout();
+      _currentUser = null;
+      _isLoggedIn = false;
+    } catch (e) {
+      debugPrint('Logout error: $e');
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -137,82 +236,24 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      // Simulating API call delay
-      await Future.delayed(const Duration(seconds: 1));
-
-      // Create guest user
-      final guestUser = User(
+      // Create a guest user with limited functionality
+      _currentUser = User(
         id: 'guest-${DateTime.now().millisecondsSinceEpoch}',
         username: 'Guest',
         email: 'guest@example.com',
-        walletBalance: 1000.0,
+        walletBalance: 1000.0, // Default starting balance for guests
+        isGuest: true,
       );
-
-      _currentUser = guestUser;
       _isLoggedIn = true;
 
-      // Save to shared preferences
+      // Save guest status to preferences
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(
-        AppConstants.userKey,
-        json.encode(guestUser.toJson()),
-      );
-      await prefs.setBool(AppConstants.isLoggedInKey, true);
+      await prefs.setBool('is_guest_user', true);
 
-      Utils.showToast('Logged in as guest');
       return true;
     } catch (e) {
       debugPrint('Guest login error: $e');
-      Utils.showToast('An error occurred', isError: true);
       return false;
-    } finally {
-      _isLoading = false;
-      notifyListeners();
-    }
-  }
-
-  // Update wallet balance
-  Future<bool> updateWalletBalance(double amount) async {
-    if (_currentUser == null) return false;
-
-    try {
-      // Update user wallet balance
-      final updatedUser = _currentUser!.copyWith(
-        walletBalance: _currentUser!.walletBalance + amount,
-      );
-
-      _currentUser = updatedUser;
-
-      // Save to shared preferences
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(
-        AppConstants.userKey,
-        json.encode(updatedUser.toJson()),
-      );
-
-      notifyListeners();
-      return true;
-    } catch (e) {
-      debugPrint('Error updating wallet: $e');
-      return false;
-    }
-  }
-
-  // Logout
-  Future<void> logout() async {
-    _isLoading = true;
-    notifyListeners();
-
-    try {
-      // Clear shared preferences
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.remove(AppConstants.userKey);
-      await prefs.setBool(AppConstants.isLoggedInKey, false);
-
-      _currentUser = null;
-      _isLoggedIn = false;
-    } catch (e) {
-      debugPrint('Logout error: $e');
     } finally {
       _isLoading = false;
       notifyListeners();

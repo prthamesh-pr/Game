@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import '../constants/colors.dart';
 import '../utils/utils.dart';
+import '../screens/transactions_screen.dart';
+import 'package:provider/provider.dart';
+import '../providers/auth_provider.dart';
 
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
@@ -49,7 +52,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                     color: const Color.fromRGBO(255, 255, 255, 0.2),
                     borderRadius: BorderRadius.circular(30),
                     border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.3),
+                      color: Colors.white.withOpacity(0.3),
                       width: 1,
                     ),
                   ),
@@ -100,7 +103,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.1),
+                color: AppColors.primary.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Column(
@@ -138,14 +141,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                   AppColors.success,
                   () {
                     Navigator.pop(context);
-                    // Show add money dialog here
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text(
-                          'Add Tokens functionality will be implemented with backend integration',
-                        ),
-                      ),
-                    );
+                    _showAddTokensDialog(context);
                   },
                 ),
                 _walletActionButton(
@@ -155,14 +151,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                   AppColors.warning,
                   () {
                     Navigator.pop(context);
-                    // Show withdraw dialog here
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text(
-                          'Withdraw functionality will be implemented with backend integration',
-                        ),
-                      ),
-                    );
+                    _showWithdrawDialog(context);
                   },
                 ),
               ],
@@ -174,12 +163,11 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
             TextButton(
               onPressed: () {
                 Navigator.pop(context);
-                // Navigate to transaction history
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text(
-                      'Transaction History will be implemented with backend integration',
-                    ),
+                // Navigate to transaction history screen
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const TransactionsScreen(),
                   ),
                 );
               },
@@ -204,9 +192,9 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.1),
+          color: color.withOpacity(0.1),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: color.withValues(alpha: 0.3)),
+          border: Border.all(color: color.withOpacity(0.3)),
         ),
         child: Column(
           children: [
@@ -218,6 +206,149 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  // Show dialog to add tokens
+  void _showAddTokensDialog(BuildContext context) {
+    final TextEditingController amountController = TextEditingController();
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Add Tokens'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('Enter amount to add to your wallet'),
+            const SizedBox(height: 16),
+            TextField(
+              controller: amountController,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                labelText: 'Amount',
+                prefixIcon: Icon(Icons.currency_rupee),
+                border: OutlineInputBorder(),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final amount = double.tryParse(amountController.text);
+              if (amount != null && amount > 0) {
+                Navigator.pop(context);
+
+                // Show loading indicator
+                showDialog(
+                  context: context,
+                  barrierDismissible: false,
+                  builder: (context) =>
+                      const Center(child: CircularProgressIndicator()),
+                );
+
+                try {
+                  // Refresh wallet balance from API
+                  await authProvider.refreshWalletBalance();
+                  Navigator.of(context).pop(); // Close loading dialog
+                  Utils.showToast('Wallet refreshed successfully');
+                } catch (e) {
+                  Navigator.of(context).pop(); // Close loading dialog
+                  Utils.showToast('Failed to refresh wallet', isError: true);
+                }
+              } else {
+                Utils.showToast('Please enter a valid amount', isError: true);
+              }
+            },
+            child: const Text('Add Tokens'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Show dialog to withdraw tokens
+  void _showWithdrawDialog(BuildContext context) {
+    final TextEditingController amountController = TextEditingController();
+    final TextEditingController accountController = TextEditingController();
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Withdraw Tokens'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('Enter withdrawal details'),
+            const SizedBox(height: 16),
+            TextField(
+              controller: amountController,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                labelText: 'Amount',
+                prefixIcon: Icon(Icons.currency_rupee),
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: accountController,
+              decoration: const InputDecoration(
+                labelText: 'Account Details',
+                prefixIcon: Icon(Icons.account_balance),
+                border: OutlineInputBorder(),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final amount = double.tryParse(amountController.text);
+              if (amount != null &&
+                  amount > 0 &&
+                  accountController.text.isNotEmpty) {
+                Navigator.pop(context);
+
+                // Show loading indicator
+                showDialog(
+                  context: context,
+                  barrierDismissible: false,
+                  builder: (context) =>
+                      const Center(child: CircularProgressIndicator()),
+                );
+
+                try {
+                  // Refresh wallet balance from API
+                  await authProvider.refreshWalletBalance();
+                  Navigator.of(context).pop(); // Close loading dialog
+                  Utils.showToast('Withdrawal request submitted');
+                } catch (e) {
+                  Navigator.of(context).pop(); // Close loading dialog
+                  Utils.showToast(
+                    'Failed to process withdrawal',
+                    isError: true,
+                  );
+                }
+              } else {
+                Utils.showToast('Please enter valid details', isError: true);
+              }
+            },
+            child: const Text('Withdraw'),
+          ),
+        ],
       ),
     );
   }

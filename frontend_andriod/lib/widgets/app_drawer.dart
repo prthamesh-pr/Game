@@ -10,8 +10,29 @@ import '../screens/login_screen.dart';
 import '../screens/content_page.dart';
 import '../screens/main_screen.dart';
 
-class AppDrawer extends StatelessWidget {
+class AppDrawer extends StatefulWidget {
   const AppDrawer({super.key});
+
+  @override
+  State<AppDrawer> createState() => _AppDrawerState();
+}
+
+class _AppDrawerState extends State<AppDrawer> {
+  @override
+  void initState() {
+    super.initState();
+    // Refresh user profile when drawer is opened
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _refreshUserProfile();
+    });
+  }
+
+  Future<void> _refreshUserProfile() async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    if (authProvider.isLoggedIn && !authProvider.currentUser!.isGuest) {
+      await authProvider.refreshWalletBalance();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -255,6 +276,55 @@ class AppDrawer extends StatelessWidget {
                         ),
                       ),
                     );
+                  },
+                ),
+                const Divider(),
+                ListTile(
+                  leading: const Icon(Icons.logout, color: Colors.red),
+                  title: const Text(
+                    'Logout',
+                    style: TextStyle(color: Colors.red),
+                  ),
+                  onTap: () async {
+                    // Show confirmation dialog
+                    final shouldLogout =
+                        await showDialog<bool>(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            title: const Text('Logout'),
+                            content: const Text(
+                              'Are you sure you want to logout?',
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context, false),
+                                child: const Text('Cancel'),
+                              ),
+                              TextButton(
+                                onPressed: () => Navigator.pop(context, true),
+                                child: const Text(
+                                  'Logout',
+                                  style: TextStyle(color: Colors.red),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ) ??
+                        false;
+
+                    // If confirmed, logout and navigate to login screen
+                    if (shouldLogout && context.mounted) {
+                      await authProvider.logout();
+                      if (context.mounted) {
+                        Navigator.pushAndRemoveUntil(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const LoginScreen(),
+                          ),
+                          (route) => false,
+                        );
+                      }
+                    }
                   },
                 ),
               ],

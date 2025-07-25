@@ -28,9 +28,19 @@ app.use(securityHeaders);
 
 // CORS configuration
 app.use(cors({
-  origin: process.env.NODE_ENV === 'production' 
-    ? ['https://your-frontend-domain.com', 'https://your-admin-panel.com']
-    : ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:8080'],
+  origin: function(origin, callback) {
+    // Allow requests from any origin in development
+    if(process.env.NODE_ENV !== 'production') {
+      return callback(null, true);
+    }
+    // In production, specify allowed origins
+    const allowedOrigins = ['https://your-frontend-domain.com', 'https://your-admin-panel.com'];
+    if(!origin || allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true)
+    } else {
+      callback(new Error('CORS policy violation'))
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization']

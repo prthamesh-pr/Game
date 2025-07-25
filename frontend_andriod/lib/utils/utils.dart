@@ -39,11 +39,11 @@ class Utils {
   static String getClassDescription(String gameClass) {
     switch (gameClass) {
       case 'A':
-        return '1x3 repeating numbers (e.g. 111, 222)';
+        return 'Single Page Game';
       case 'B':
-        return '2x1 pattern (e.g. 112, 221)';
+        return 'Double Page Game';
       case 'C':
-        return 'Unique 3-digit numbers (e.g. 123, 456)';
+        return 'Triple Page Game';
       default:
         return '';
     }

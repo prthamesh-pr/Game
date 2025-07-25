@@ -12,8 +12,14 @@ const userSchema = new mongoose.Schema({
   },
   mobileNumber: {
     type: String,
-    required: [true, 'Mobile number is required'],
     match: [/^[6-9]\d{9}$/, 'Please enter a valid 10-digit mobile number']
+  },
+  email: {
+    type: String,
+    required: [true, 'Email is required'],
+    match: [/^\S+@\S+\.\S+$/, 'Please enter a valid email address'],
+    trim: true,
+    lowercase: true
   },
   passwordHash: {
     type: String,
@@ -23,6 +29,13 @@ const userSchema = new mongoose.Schema({
   wallet: {
     type: Number,
     default: 0,
+    min: [0, 'Wallet balance cannot be negative']
+  },
+  walletBalance: {
+    type: Number,
+    default: function() {
+      return this.wallet || 0;
+    },
     min: [0, 'Wallet balance cannot be negative']
   },
   selectedNumbers: {
@@ -54,6 +67,10 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: true
   },
+  isGuest: {
+    type: Boolean,
+    default: false
+  },
   lastLogin: {
     type: Date,
     default: Date.now
@@ -75,7 +92,8 @@ const userSchema = new mongoose.Schema({
 });
 
 // Index for faster queries
-userSchema.index({ mobileNumber: 1 }, { unique: true });
+userSchema.index({ mobileNumber: 1 }, { sparse: true });
+userSchema.index({ email: 1 }, { unique: true });
 userSchema.index({ username: 1 }, { unique: true });
 userSchema.index({ createdAt: -1 });
 
@@ -87,15 +105,24 @@ userSchema.virtual('winLossRatio').get(function() {
 
 // Pre-save middleware to hash password
 userSchema.pre('save', async function(next) {
-  if (!this.isModified('passwordHash')) return next();
-  
-  try {
-    const saltRounds = parseInt(process.env.BCRYPT_ROUNDS) || 12;
-    this.passwordHash = await bcrypt.hash(this.passwordHash, saltRounds);
-    next();
-  } catch (error) {
-    next(error);
+  // Hash password if modified
+  if (this.isModified('passwordHash')) {
+    try {
+      const saltRounds = parseInt(process.env.BCRYPT_ROUNDS) || 12;
+      this.passwordHash = await bcrypt.hash(this.passwordHash, saltRounds);
+    } catch (error) {
+      return next(error);
+    }
   }
+  
+  // Sync wallet and walletBalance
+  if (this.isModified('wallet')) {
+    this.walletBalance = this.wallet;
+  } else if (this.isModified('walletBalance')) {
+    this.wallet = this.walletBalance;
+  }
+  
+  next();
 });
 
 // Instance method to check password
@@ -109,12 +136,13 @@ userSchema.methods.updateLastLogin = function() {
   return this.save();
 };
 
-// Static method to find user by mobile or username
+// Static method to find user by email, mobile or username
 userSchema.statics.findByCredentials = async function(identifier, password) {
   const user = await this.findOne({
     $or: [
       { mobileNumber: identifier },
-      { username: identifier }
+      { username: identifier },
+      { email: identifier }
     ],
     isActive: true
   });

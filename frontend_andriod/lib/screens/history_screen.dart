@@ -16,13 +16,10 @@ class HistoryScreen extends StatelessWidget {
     final authProvider = Provider.of<AuthProvider>(context);
     final gameProvider = Provider.of<GameProvider>(context);
     final user = authProvider.currentUser;
-    final isLoading = gameProvider.isLoading;
 
     if (user == null) {
       return const Scaffold(body: Center(child: Text('User not found')));
     }
-
-    final userGamePlays = gameProvider.getGamePlaysByUser(user.id);
 
     return Scaffold(
       appBar: CustomAppBar(
@@ -30,18 +27,60 @@ class HistoryScreen extends StatelessWidget {
         walletBalance: user.walletBalance,
         showWallet: true,
       ),
-      body: isLoading
-          ? const Center(child: LoadingSpinner())
-          : userGamePlays.isEmpty
-          ? const Center(child: Text('No game history found'))
-          : ListView.builder(
-              itemCount: userGamePlays.length,
-              padding: const EdgeInsets.all(16),
-              itemBuilder: (context, index) {
-                return _buildHistoryItem(context, userGamePlays[index]);
-              },
-            ),
+      body: RefreshIndicator(
+        onRefresh: () => gameProvider.loadGameData(),
+        child: gameProvider.isLoading
+            ? const Center(child: LoadingSpinner())
+            : FutureBuilder<List<GamePlay>>(
+                // Fetch user's game history on demand
+                future: _fetchUserGameHistory(user.id, gameProvider),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: LoadingSpinner());
+                  }
+
+                  if (snapshot.hasError) {
+                    return Center(
+                      child: Text(
+                        'Error loading history: ${snapshot.error}',
+                        textAlign: TextAlign.center,
+                      ),
+                    );
+                  }
+
+                  final userGamePlays = snapshot.data ?? [];
+
+                  if (userGamePlays.isEmpty) {
+                    return const Center(child: Text('No game history found'));
+                  }
+
+                  return ListView.builder(
+                    itemCount: userGamePlays.length,
+                    padding: const EdgeInsets.all(16),
+                    itemBuilder: (context, index) {
+                      return _buildHistoryItem(context, userGamePlays[index]);
+                    },
+                  );
+                },
+              ),
+      ),
     );
+  }
+
+  Future<List<GamePlay>> _fetchUserGameHistory(
+    String userId,
+    GameProvider gameProvider,
+  ) async {
+    // First try to get data from provider cache
+    List<GamePlay> userGamePlays = gameProvider.getGamePlaysByUser(userId);
+
+    // If no data in cache, explicitly load it
+    if (userGamePlays.isEmpty && !gameProvider.isLoading) {
+      await gameProvider.loadGameData();
+      userGamePlays = gameProvider.getGamePlaysByUser(userId);
+    }
+
+    return userGamePlays;
   }
 
   Widget _buildHistoryItem(BuildContext context, GamePlay gamePlay) {

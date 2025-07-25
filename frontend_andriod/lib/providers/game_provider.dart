@@ -1,132 +1,117 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:convert';
-import 'dart:math';
-
 import '../models/gameplay_model.dart';
 import '../models/game_result_model.dart';
-import '../utils/mock_data.dart';
 import '../utils/utils.dart';
-import '../constants/app_constants.dart';
+import '../services/game_service.dart';
+import '../services/user_service.dart';
+import '../providers/auth_provider.dart';
 
 class GameProvider with ChangeNotifier {
+  final GameService _gameService = GameService();
+  final UserService _userService = UserService();
+
   List<GamePlay> _gamePlays = [];
   List<GameResult> _gameResults = [];
+  Map<String, dynamic>? _currentRound;
   bool _isLoading = false;
 
   List<GamePlay> get gamePlays => _gamePlays;
   List<GameResult> get gameResults => _gameResults;
+  Map<String, dynamic>? get currentRound => _currentRound;
   bool get isLoading => _isLoading;
 
   // Constructor to initialize state
   GameProvider() {
-    // Load game data from shared preferences if available
-    _loadGameData();
+    loadGameData();
   }
 
-  // Load game data from shared preferences
-  Future<void> _loadGameData() async {
-    _isLoading = true;
-    notifyListeners();
-
+  // Safe load game data with error handling
+  Future<void> loadGameData() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final gamesPlayedData = prefs.getString(AppConstants.gamesPlayedKey);
-      final gameResultsData = prefs.getString(AppConstants.resultsKey);
+      _isLoading = true;
+      notifyListeners();
 
-      if (gamesPlayedData != null) {
-        final List<dynamic> decodedGamePlays = json.decode(gamesPlayedData);
-        _gamePlays = decodedGamePlays
-            .map((gamePlay) => GamePlay.fromJson(gamePlay))
-            .toList();
-      }
-
-      if (gameResultsData != null) {
-        final List<dynamic> decodedResults = json.decode(gameResultsData);
-        _gameResults = decodedResults
-            .map((result) => GameResult.fromJson(result))
-            .toList();
-      } else {
-        // Initialize with mock results if none exist
-        _gameResults = MockData.getMockGameResults();
-        await _saveGameResults();
-      }
+      await Future.wait([
+        _loadCurrentRound(),
+        _loadResults(),
+        _loadGamePlays(),
+      ]);
     } catch (e) {
-      debugPrint('Error loading game data: $e');
+      debugPrint('Error in safe load game data: $e');
     } finally {
       _isLoading = false;
       notifyListeners();
     }
   }
 
-  // Save game plays to shared preferences
-  Future<void> _saveGamePlays() async {
+  // Load current round information
+  Future<void> _loadCurrentRound() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final encodedGamePlays = json.encode(
-        _gamePlays.map((gamePlay) => gamePlay.toJson()).toList(),
-      );
-      await prefs.setString(AppConstants.gamesPlayedKey, encodedGamePlays);
+      final response = await _gameService.getCurrentRound();
+      _currentRound = response;
     } catch (e) {
-      debugPrint('Error saving game plays: $e');
+      debugPrint('Error loading current round: $e');
     }
   }
 
-  // Save game results to shared preferences
-  Future<void> _saveGameResults() async {
+  // Load recent results
+  Future<void> _loadResults() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final encodedResults = json.encode(
-        _gameResults.map((result) => result.toJson()).toList(),
-      );
-      await prefs.setString(AppConstants.resultsKey, encodedResults);
+      final response = await _gameService.getRecentResults();
+
+      final results = (response['results'] as List)
+          .map((item) => GameResult.fromJson(item))
+          .toList();
+
+      _gameResults = results;
     } catch (e) {
-      debugPrint('Error saving game results: $e');
+      debugPrint('Error loading game results: $e');
     }
   }
 
-  // Place a bet
-  Future<bool> placeBet(
-    String userId,
-    String gameClass,
-    String selectedNumber,
-    double amount,
-  ) async {
+  // Load user game plays
+  Future<void> _loadGamePlays() async {
+    try {
+      final response = await _userService.getUserSelections(limit: 50);
+
+      final plays = (response['selections'] as List)
+          .map((item) => GamePlay.fromJson(item))
+          .toList();
+
+      _gamePlays = plays;
+    } catch (e) {
+      debugPrint('Error loading game plays: $e');
+    }
+  }
+
+  // Select a number for the current game
+  Future<bool> selectNumber({
+    required String gameClass,
+    required String number,
+    required double amount,
+    required AuthProvider authProvider,
+  }) async {
     _isLoading = true;
     notifyListeners();
 
     try {
-      // Simulate API call delay
-      await Future.delayed(const Duration(milliseconds: 800));
-
-      final Random random = Random();
-
-      // Create a new game play
-      final GamePlay newGamePlay = GamePlay(
-        id: 'gp-${DateTime.now().millisecondsSinceEpoch}-${random.nextInt(1000)}',
-        userId: userId,
-        gameClass: gameClass,
-        selectedNumber: selectedNumber,
+      await _gameService.selectNumber(
+        classType: gameClass,
+        number: int.parse(number),
         amount: amount,
-        playedAt: DateTime.now(),
-        isWinner: false, // Will be updated when result is declared
-        resultNumber: null, // Will be updated when result is declared
       );
 
-      // Add to game plays list
-      _gamePlays.add(newGamePlay);
+      // Refresh user wallet balance
+      await authProvider.refreshWalletBalance();
 
-      // Sort by date (newest first)
-      _gamePlays.sort((a, b) => b.playedAt.compareTo(a.playedAt));
+      // Reload user game plays
+      await _loadGamePlays();
 
-      // Save to shared preferences
-      await _saveGamePlays();
-
-      Utils.showToast(AppConstants.betPlacedSuccess);
+      Utils.showToast('Number selected successfully!');
       return true;
     } catch (e) {
-      debugPrint('Error placing bet: $e');
-      Utils.showToast('An error occurred', isError: true);
+      debugPrint('Select number error: $e');
+      Utils.showToast('Failed to select number', isError: true);
       return false;
     } finally {
       _isLoading = false;
@@ -134,114 +119,151 @@ class GameProvider with ChangeNotifier {
     }
   }
 
-  // Get game plays by user ID
-  List<GamePlay> getGamePlaysByUser(String userId) {
-    return _gamePlays.where((gamePlay) => gamePlay.userId == userId).toList();
-  }
-
-  // Get game results by class
-  List<GameResult> getGameResultsByClass(String gameClass) {
-    return _gameResults
-        .where((result) => result.gameClass == gameClass)
-        .toList();
-  }
-
-  // Get latest result by class
-  GameResult? getLatestResultByClass(String gameClass) {
-    final classList = _gameResults
-        .where((result) => result.gameClass == gameClass)
-        .toList();
-    return classList.isNotEmpty ? classList.first : null;
-  }
-
-  // Generate new result (simulated)
-  Future<GameResult> generateResult(String gameClass) async {
+  // Cancel a selection
+  Future<bool> cancelSelection(
+    String selectionId,
+    AuthProvider authProvider,
+  ) async {
     _isLoading = true;
     notifyListeners();
 
     try {
-      // Simulate API call delay
-      await Future.delayed(const Duration(seconds: 1));
+      await _gameService.cancelSelection(selectionId);
 
-      final Random random = Random();
-      String winningNumber;
+      // Refresh user wallet balance
+      await authProvider.refreshWalletBalance();
 
-      // Generate winning number based on game class
-      if (gameClass == 'A') {
-        final numbers = MockData.getClassANumbers();
-        winningNumber = numbers[random.nextInt(numbers.length)];
-      } else if (gameClass == 'B') {
-        final numbers = MockData.getClassBNumbers();
-        winningNumber = numbers[random.nextInt(numbers.length)];
-      } else {
-        final numbers = MockData.getClassCNumbers();
-        winningNumber = numbers[random.nextInt(numbers.length)];
-      }
+      // Reload user game plays
+      await _loadGamePlays();
 
-      // Create new result
-      final GameResult newResult = GameResult(
-        id: 'res-${DateTime.now().millisecondsSinceEpoch}-${random.nextInt(1000)}',
-        gameClass: gameClass,
-        winningNumber: winningNumber,
-        resultDate: DateTime.now(),
-      );
-
-      // Update game plays with this result
-      for (int i = 0; i < _gamePlays.length; i++) {
-        final gamePlay = _gamePlays[i];
-        if (gamePlay.gameClass == gameClass &&
-            gamePlay.resultNumber == null &&
-            gamePlay.playedAt.day == DateTime.now().day) {
-          // Update game play with result
-          final isWinner = gamePlay.selectedNumber == winningNumber;
-          _gamePlays[i] = GamePlay(
-            id: gamePlay.id,
-            userId: gamePlay.userId,
-            gameClass: gamePlay.gameClass,
-            selectedNumber: gamePlay.selectedNumber,
-            amount: gamePlay.amount,
-            playedAt: gamePlay.playedAt,
-            isWinner: isWinner,
-            resultNumber: winningNumber,
-          );
-        }
-      }
-
-      // Add to results list
-      _gameResults.add(newResult);
-
-      // Sort by date (newest first)
-      _gameResults.sort((a, b) => b.resultDate.compareTo(a.resultDate));
-
-      // Save to shared preferences
-      await _saveGamePlays();
-      await _saveGameResults();
-
-      return newResult;
+      Utils.showToast('Selection cancelled successfully!');
+      return true;
     } catch (e) {
-      debugPrint('Error generating result: $e');
-      throw Exception('Failed to generate result');
+      debugPrint('Cancel selection error: $e');
+      Utils.showToast('Failed to cancel selection', isError: true);
+      return false;
     } finally {
       _isLoading = false;
       notifyListeners();
     }
   }
 
-  // Reset mock data
-  Future<void> resetMockData(String userId) async {
-    _isLoading = true;
-    notifyListeners();
-
+  // Get valid numbers for a specific class
+  Future<List<String>> getValidNumbers(String gameClass) async {
     try {
-      // Generate new mock data
-      _gamePlays = MockData.getMockGamePlays(userId);
-      _gameResults = MockData.getMockGameResults();
+      final response = await _gameService.getValidNumbers(gameClass);
 
-      // Save to shared preferences
-      await _saveGamePlays();
-      await _saveGameResults();
+      final validNumbers = (response['validNumbers'] as List)
+          .map((item) => item.toString())
+          .toList();
+
+      return validNumbers;
     } catch (e) {
-      debugPrint('Error resetting mock data: $e');
+      debugPrint('Get valid numbers error: $e');
+      return [];
+    }
+  }
+
+  // Get all game rounds with pagination
+  Future<Map<String, dynamic>> getAllRounds({
+    int page = 1,
+    int limit = 10,
+  }) async {
+    try {
+      final response = await _gameService.getAllRounds(
+        page: page,
+        limit: limit,
+      );
+      return response;
+    } catch (e) {
+      debugPrint('Get all rounds error: $e');
+      return {'rounds': [], 'total': 0, 'page': page, 'limit': limit};
+    }
+  }
+
+  // Get current user selections for the current round
+  Future<List<GamePlay>> getCurrentSelections() async {
+    try {
+      final response = await _gameService.getCurrentSelections();
+
+      final selections = (response['selections'] as List)
+          .map((item) => GamePlay.fromJson(item))
+          .toList();
+
+      return selections;
+    } catch (e) {
+      debugPrint('Get current selections error: $e');
+      return [];
+    }
+  }
+
+  // Filter game results by class
+  List<GameResult> getGameResultsByClass(String gameClass) {
+    return _gameResults
+        .where((result) => result.gameClass == gameClass)
+        .toList();
+  }
+
+  // Get results by class from API
+  Future<List<GameResult>> fetchGameResultsByClass(String gameClass) async {
+    try {
+      _isLoading = true;
+      notifyListeners();
+
+      final response = await _gameService.getResultsByClass(gameClass);
+
+      final results = (response['results'] as List)
+          .map((item) => GameResult.fromJson(item))
+          .toList();
+
+      // Update the local results for this class
+      _gameResults.removeWhere((result) => result.gameClass == gameClass);
+      _gameResults.addAll(results);
+
+      return results;
+    } catch (e) {
+      debugPrint('Error fetching results by class: $e');
+      return [];
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  // Get user's game plays (selections)
+  List<GamePlay> getGamePlaysByUser(String userId) {
+    return _gamePlays.where((play) => play.userId == userId).toList();
+  }
+
+  // Place a bet (to replace the selectNumber method when needed)
+  Future<bool> placeBet({
+    required String gameClass,
+    required String number,
+    required double amount,
+    required AuthProvider authProvider,
+  }) async {
+    // This is just an alias for selectNumber method
+    return selectNumber(
+      gameClass: gameClass,
+      number: number,
+      amount: amount,
+      authProvider: authProvider,
+    );
+  }
+
+  // For demo/testing purposes - reset mock data
+  Future<bool> resetMockData(String userId) async {
+    try {
+      _isLoading = true;
+      notifyListeners();
+
+      // Reload all data from server
+      await loadGameData();
+
+      return true;
+    } catch (e) {
+      debugPrint('Reset mock data error: $e');
+      return false;
     } finally {
       _isLoading = false;
       notifyListeners();

@@ -3,12 +3,14 @@ class User {
   final String username;
   String email;
   double walletBalance;
+  bool isGuest;
 
   User({
     required this.id,
     required this.username,
     required this.email,
     required this.walletBalance,
+    this.isGuest = false,
   });
 
   Map<String, dynamic> toJson() {
@@ -17,6 +19,7 @@ class User {
       'username': username,
       'email': email,
       'walletBalance': walletBalance,
+      'isGuest': isGuest,
     };
   }
 
@@ -26,6 +29,7 @@ class User {
       username: json['username'] as String,
       email: json['email'] as String,
       walletBalance: json['walletBalance'].toDouble(),
+      isGuest: json['isGuest'] ?? false,
     );
   }
 

@@ -275,73 +275,7 @@ const getUserResults = async (req, res) => {
   }
 };
 
-/**
- * Get User Statistics
- */
-const getUserStats = async (req, res) => {
-  try {
-    const userId = req.user.id;
-    const user = await User.findById(userId);
-
-    // Get detailed statistics
-    const totalBets = await NumberSelection.countDocuments({ userId });
-    const totalWins = await NumberSelection.countDocuments({ 
-      userId, 
-      status: 'win' 
-    });
-    const totalLosses = await NumberSelection.countDocuments({ 
-      userId, 
-      status: 'loss' 
-    });
-
-    // Get class-wise statistics
-    const classStats = await NumberSelection.aggregate([
-      { $match: { userId: user._id } },
-      {
-        $group: {
-          _id: '$classType',
-          totalBets: { $sum: 1 },
-          totalAmount: { $sum: '$amount' },
-          wins: {
-            $sum: { $cond: [{ $eq: ['$status', 'win'] }, 1, 0] }
-          },
-          totalWinnings: { $sum: '$winningAmount' }
-        }
-      }
-    ]);
-
-    // Get recent activity
-    const recentSelections = await NumberSelection.find({ userId })
-      .sort({ placedAt: -1 })
-      .limit(5);
-
-    res.json({
-      success: true,
-      message: 'User statistics retrieved successfully',
-      data: {
-        overview: {
-          wallet: user.wallet,
-          totalBets,
-          totalWins,
-          totalLosses,
-          winRate: totalBets > 0 ? ((totalWins / totalBets) * 100).toFixed(2) + '%' : '0%',
-          totalWinnings: user.totalWinnings,
-          totalLosses: user.totalLosses,
-          netProfit: user.totalWinnings - user.totalLosses
-        },
-        classStats,
-        recentActivity: recentSelections
-      }
-    });
-
-  } catch (error) {
-    console.error('Get user stats error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Internal server error'
-    });
-  }
-};
+// REMOVED DUPLICATE getUserStats FUNCTION - see below for the retained version.
 
 /**
  * Change Password

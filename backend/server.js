@@ -20,6 +20,10 @@ const bcrypt = require('bcryptjs');
 
 const app = express();
 
+// Trust proxy for environments like Render, Heroku, etc.
+// This fixes the express-rate-limit X-Forwarded-For warning
+app.set('trust proxy', 1);
+
 // Security middleware
 app.use(helmet({
   crossOriginResourcePolicy: { policy: "cross-origin" }

@@ -18,6 +18,7 @@ class RegisterScreen extends StatefulWidget {
 class _RegisterScreenState extends State<RegisterScreen> {
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _mobileNumberController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController =
       TextEditingController();
@@ -30,6 +31,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   void dispose() {
     _usernameController.dispose();
     _emailController.dispose();
+    _mobileNumberController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
@@ -53,6 +55,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         _usernameController.text.trim(),
         _emailController.text.trim(),
         _passwordController.text,
+        _mobileNumberController.text.trim(),
       );
 
       if (success && mounted) {
@@ -140,6 +143,30 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       }
                       if (!_emailRegex.hasMatch(value)) {
                         return 'Please enter a valid email';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  
+                  // Mobile Number field (optional)
+                  TextFormField(
+                    controller: _mobileNumberController,
+                    keyboardType: TextInputType.phone,
+                    decoration: InputDecoration(
+                      labelText: 'Mobile Number (Optional)',
+                      prefixIcon: const Icon(Icons.phone),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    validator: (value) {
+                      if (value != null && value.isNotEmpty) {
+                        // Indian mobile number validation (10 digits starting with 6, 7, 8, or 9)
+                        final mobileRegex = RegExp(r'^[6-9]\d{9}$');
+                        if (!mobileRegex.hasMatch(value)) {
+                          return 'Please enter a valid 10-digit mobile number';
+                        }
                       }
                       return null;
                     },

@@ -44,7 +44,7 @@ const registerUser = async (req, res) => {
       });
     }
 
-    if (mobileNumber && !isValidMobile(mobileNumber)) {
+    if (mobileNumber && mobileNumber.trim() !== '' && !isValidMobile(mobileNumber)) {
       return res.status(400).json({
         success: false,
         message: 'Please enter a valid 10-digit mobile number starting with 6, 7, 8, or 9'

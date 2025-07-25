@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 
 class AppColors {
   // Primary colors
-  static const Color primary = Color(0xFF4834DF); // Royal Blue
-  static const Color secondary = Color(0xFFFFA502); // Vibrant Orange
+  static const Color primary = Color(0xFFF39C12); // Orange (main theme)
+  static const Color secondary = Color(0xFF4834DF); // Royal Blue (secondary)
   static const Color accent = Color(0xFF20BF6B); // Turquoise Green
 
   // Background colors
@@ -17,7 +17,7 @@ class AppColors {
   static const Color textLight = Color(0xFFB2BEC3);
 
   // Game class colors
-  static const Color classA = Color(0xFF4834DF); // Royal Blue
+  static const Color classA = Color(0xFFF39C12); // Orange
   static const Color classB = Color(0xFFFF6B6B); // Coral Red
   static const Color classC = Color(0xFF20BF6B); // Turquoise Green
 
@@ -29,25 +29,25 @@ class AppColors {
   static const Color pending = Color(0xFF7F8FA6);
 
   // Gradient colors
-  static const Color gradientStart = Color(0xFF4834DF);
-  static const Color gradientEnd = Color(0xFF6F5AE3);
-  static const Color orangeGradientStart = Color(0xFFFFA502);
-  static const Color orangeGradientEnd = Color(0xFFFF7B02);
+  static const Color gradientStart = Color(0xFFF39C12); // Orange
+  static const Color gradientEnd = Color(0xFFE67E22); // Darker Orange
+  static const Color orangeGradientStart = Color(0xFFF39C12);
+  static const Color orangeGradientEnd = Color(0xFFE67E22);
   static const Color greenGradientStart = Color(0xFF20BF6B);
   static const Color greenGradientEnd = Color(0xFF0DA751);
 
-  // Number button colors - more vibrant set
+  // Number button colors - more vibrant set with orange theme
   static const List<Color> numberColors = [
-    Color(0xFF4834DF), // Royal Blue
+    Color(0xFFF39C12), // Orange (primary)
+    Color(0xFFE67E22), // Darker Orange
     Color(0xFFFF6B6B), // Coral Red
     Color(0xFF20BF6B), // Turquoise Green
-    Color(0xFFFFA502), // Vibrant Orange
+    Color(0xFF4834DF), // Royal Blue
     Color(0xFF8E44AD), // Purple
     Color(0xFF3498DB), // Sky Blue
     Color(0xFFE74C3C), // Red
     Color(0xFF1ABC9C), // Teal
     Color(0xFFD980FA), // Light Purple
-    Color(0xFF2980B9), // Dark Blue
     Color(0xFFEA2027), // Red
     Color(0xFF009432), // Green
   ];

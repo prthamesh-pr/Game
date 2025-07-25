@@ -21,7 +21,7 @@ class AuthService {
   Future<User> login(String email, String password) async {
     try {
       final response = await _apiService.post(ApiConstants.loginEndpoint, {
-        'email': email,
+        'identifier': email, // Changed from 'email' to 'identifier'
         'password': password,
       }, requireAuth: false);
 

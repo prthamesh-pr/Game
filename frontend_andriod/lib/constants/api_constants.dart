@@ -4,6 +4,7 @@ class ApiConstants {
   // Base URL for API
   static const String baseUrl =
       'https://game-39rz.onrender.com'; // Production server
+      // 'http://localhost:5000'; // Local server for testing
 
   // API endpoints
   static const String registerEndpoint = '/api/auth/register';

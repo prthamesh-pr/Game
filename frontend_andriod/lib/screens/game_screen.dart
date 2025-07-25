@@ -37,7 +37,8 @@ class _GameScreenState extends State<GameScreen> {
 
       setState(() {
         // Convert numbers from API response to List<String>
-        if (response['data'] != null && response['data']['validNumbers'] != null) {
+        if (response['data'] != null &&
+            response['data']['validNumbers'] != null) {
           _numbers = (response['data']['validNumbers'] as List)
               .map((n) => n.toString())
               .toList();

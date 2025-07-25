@@ -55,12 +55,18 @@ const registerUser = async (req, res) => {
     }
 
     // Create new user
-    const user = new User({
+    const userData = {
       username,
       email,
-      ...(mobileNumber && { mobileNumber }),
       passwordHash: password // Will be hashed by pre-save middleware
-    });
+    };
+    
+    // Only add mobileNumber if it's provided and valid
+    if (mobileNumber) {
+      userData.mobileNumber = mobileNumber;
+    }
+    
+    const user = new User(userData);
 
     await user.save();
 

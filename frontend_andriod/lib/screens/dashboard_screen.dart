@@ -139,7 +139,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF6C63FF).withOpacity(0.3),
+            color: const Color(0xFF6C63FF).withValues(alpha: 0.3),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -158,7 +158,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     Text(
                       'Welcome back,',
                       style: TextStyle(
-                        color: Colors.white.withOpacity(0.9),
+                        color: Colors.white.withValues(alpha: 0.9),
                         fontSize: subtitleSize,
                       ),
                     ),
@@ -178,10 +178,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         vertical: 6,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
+                        color: Colors.white.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
-                          color: Colors.white.withOpacity(0.3),
+                          color: Colors.white.withValues(alpha: 0.3),
                         ),
                       ),
                       child: Row(
@@ -211,10 +211,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 width: isTablet ? 60 : 50,
                 height: isTablet ? 60 : 50,
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
+                  color: Colors.white.withValues(alpha: 0.2),
                   shape: BoxShape.circle,
                   border: Border.all(
-                    color: Colors.white.withOpacity(0.3),
+                    color: Colors.white.withValues(alpha: 0.3),
                     width: 2,
                   ),
                 ),
@@ -293,10 +293,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withOpacity(0.3), width: 2),
+        border: Border.all(color: color.withValues(alpha: 0.3), width: 2),
         boxShadow: [
           BoxShadow(
-            color: color.withOpacity(0.15),
+            color: color.withValues(alpha: 0.15),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -315,12 +315,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [color.withOpacity(0.2), color.withOpacity(0.1)],
+                    colors: [color.withValues(alpha: 0.2), color.withValues(alpha: 0.1)],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: color.withOpacity(0.3)),
+                  border: Border.all(color: color.withValues(alpha: 0.3)),
                 ),
                 child: Text(
                   'Class $gameClass',
@@ -423,12 +423,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: resultColor.withOpacity(0.1),
+            color: resultColor.withValues(alpha: 0.1),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
         ],
-        border: Border.all(color: resultColor.withOpacity(0.1)),
+        border: Border.all(color: resultColor.withValues(alpha: 0.1)),
       ),
       child: Row(
         children: [
@@ -437,8 +437,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  resultColor.withOpacity(0.2),
-                  resultColor.withOpacity(0.1),
+                  resultColor.withValues(alpha: 0.2),
+                  resultColor.withValues(alpha: 0.1),
                 ],
               ),
               shape: BoxShape.circle,
@@ -485,12 +485,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  resultColor.withOpacity(0.2),
-                  resultColor.withOpacity(0.1),
+                  resultColor.withValues(alpha: 0.2),
+                  resultColor.withValues(alpha: 0.1),
                 ],
               ),
               borderRadius: BorderRadius.circular(25),
-              border: Border.all(color: resultColor.withOpacity(0.3)),
+              border: Border.all(color: resultColor.withValues(alpha: 0.3)),
             ),
             child: Text(
               result.winningNumber,

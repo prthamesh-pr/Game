@@ -92,7 +92,7 @@ const userSchema = new mongoose.Schema({
 });
 
 // Index for faster queries
-userSchema.index({ mobileNumber: 1 }, { sparse: true });
+userSchema.index({ mobileNumber: 1 }, { unique: true, sparse: true });
 userSchema.index({ email: 1 }, { unique: true });
 userSchema.index({ username: 1 }, { unique: true });
 userSchema.index({ createdAt: -1 });

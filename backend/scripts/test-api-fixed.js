@@ -206,7 +206,7 @@ class APITester {
     await this.test('Select Number (Game)', async () => {
       const result = await this.makeRequest('/api/game/select', 'POST', {
         classType: 'A',
-        number: '102', // Sum = 3, divisible by 3, so class A
+        number: '111', // All same digits, so class A
         amount: 10
       }, userToken);
       if (!result.success) throw new Error(result.message);

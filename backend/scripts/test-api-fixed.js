@@ -23,7 +23,7 @@ const testUser = {
 
 const testAdmin = {
   email: '963sohamraut@gmail.com',
-  password: 'Admin@123'
+  password: 'admin123'
 };
 
 class APITester {

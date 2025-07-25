@@ -1,4 +1,4 @@
-const User = require('../models/User');
+﻿const User = require('../models/User');
 const NumberSelection = require('../models/NumberSelection');
 const Result = require('../models/Result');
 const WalletTransaction = require('../models/WalletTransaction');
@@ -18,335 +18,264 @@ const selectNumber = async (req, res) => {
     const userId = req.user.id;
 
     // Validate inputs
-    if (!['A', 'B', 'C'].includes(classType)) {
+    if (!["A", "B", "C"].includes(classType)) {
       return res.status(400).json({
         success: false,
-        message: 'Invalid class type. Must be A, B, or C'
+        message: "Invalid class type. Must be A, B, or C"
       });
     }
 
     if (!isValid3DigitNumber(number)) {
       return res.status(400).json({
         success: false,
-        message: 'Invalid number format. Must be exactly 3 digits'
+        message: "Number must be a valid 3-digit number"
       });
     }
 
-    // Verify number belongs to the specified class
-    const actualClass = determineNumberClass(number);
-    if (actualClass !== classType) {
+    const minAmount = 10;  // Minimum bet amount
+    const maxAmount = 1000;  // Maximum bet amount
+    
+    if (amount < minAmount || amount > maxAmount) {
       return res.status(400).json({
         success: false,
-        message: `Number ${number} does not belong to class ${classType}`
+        message: `Amount must be between ${minAmount} and ${maxAmount}`
       });
     }
-
-    if (amount < 1) {
+    
+    // Check if number is valid for the selected class
+    const calculatedClass = determineNumberClass(number);
+    if (calculatedClass !== classType) {
       return res.status(400).json({
         success: false,
-        message: 'Bet amount must be at least 1'
+        message: `Number ${number} belongs to class ${calculatedClass}, not class ${classType}`
       });
     }
 
-    // Get user
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: 'User not found'
-      });
-    }
-
-    // Check wallet balance
-    if (user.wallet < amount) {
-      return res.status(400).json({
-        success: false,
-        message: 'Insufficient wallet balance'
-      });
-    }
-
-    // Check if there's an active round
-    let currentRound = await Result.getCurrentRound();
+    // Get current active round
+    const currentRound = await Result.findOne({ status: "active" }).sort({ createdAt: -1 });
+    
     if (!currentRound) {
-      // Create new round if none exists
-      const now = new Date();
-      const roundId = `ROUND_${now.getTime()}`;
-      
-      currentRound = new Result({
-        roundId,
-        startTime: now,
-        endTime: new Date(now.getTime() + 60 * 60 * 1000), // 1 hour from now
-        status: 'active'
+      return res.status(400).json({
+        success: false,
+        message: "No active round found"
       });
-      await currentRound.save();
     }
-
-    // Check if user already has a selection for this class in current round
+    
+    // Check if user has sufficient balance
+    const user = await User.findById(userId);
+    if (user.wallet.balance < amount) {
+      return res.status(400).json({
+        success: false,
+        message: "Insufficient balance"
+      });
+    }
+    
+    // Check if number is already selected by this user in current round
     const existingSelection = await NumberSelection.findOne({
-      userId,
-      classType,
-      roundId: currentRound.roundId,
-      status: 'pending'
+      user: userId,
+      round: currentRound._id,
+      number,
+      classType
     });
-
+    
     if (existingSelection) {
       return res.status(400).json({
         success: false,
-        message: `You have already selected a number for class ${classType} in this round`
+        message: "You have already selected this number for the current round"
       });
     }
-
-    // Deduct amount from wallet
-    const balanceBefore = user.wallet;
-    user.wallet -= amount;
-    await user.save();
-
-    // Create number selection
-    const selection = new NumberSelection({
-      userId,
-      classType,
+    
+    // Create new selection
+    const newSelection = new NumberSelection({
+      user: userId,
+      round: currentRound._id,
       number,
+      classType,
       amount,
-      roundId: currentRound.roundId,
-      status: 'pending'
+      status: "active"
     });
-    await selection.save();
-
+    
+    // Deduct amount from user's wallet
+    user.wallet.balance -= amount;
+    
     // Create wallet transaction
-    await WalletTransaction.createTransaction({
-      userId,
-      type: 'debit',
-      amount,
-      source: 'game-play',
-      description: `Bet placed - Class ${classType}, Number: ${number}`,
-      balanceBefore,
-      balanceAfter: user.wallet,
-      roundId: currentRound.roundId,
-      metadata: {
-        classType,
-        selectedNumber: number
+    const transaction = new WalletTransaction({
+      user: userId,
+      amount: -amount,
+      type: "bet",
+      description: `Bet placed for number ${number} in round ${currentRound.roundNumber}`,
+      balanceAfter: user.wallet.balance,
+      relatedEntity: {
+        type: "selection",
+        id: newSelection._id
       }
     });
-
-    // Update user's selected numbers (for quick access)
-    user.selectedNumbers[`class${classType}`] = {
-      number,
-      amount,
-      placedAt: new Date(),
-      roundId: currentRound.roundId
-    };
-    await user.save();
-
-    res.json({
+    
+    // Save all changes in a transaction
+    await Promise.all([
+      newSelection.save(),
+      user.save(),
+      transaction.save()
+    ]);
+    
+    res.status(201).json({
       success: true,
-      message: 'Number selected successfully',
+      message: "Number selected successfully",
       data: {
         selection: {
-          id: selection._id,
-          classType,
+          id: newSelection._id,
           number,
+          classType,
           amount,
-          roundId: currentRound.roundId,
-          placedAt: selection.placedAt
+          roundNumber: currentRound.roundNumber,
+          createdAt: newSelection.createdAt
         },
-        user: {
-          wallet: user.wallet
-        },
-        round: {
-          roundId: currentRound.roundId,
-          endTime: currentRound.endTime
-        }
+        walletBalance: user.wallet.balance
       }
     });
-
+    
   } catch (error) {
-    console.error('Select number error:', error);
+    console.error("Error selecting number:", error);
     res.status(500).json({
       success: false,
-      message: 'Internal server error'
+      message: "Error selecting number"
     });
   }
 };
 
 /**
- * Get Current Round Information
+ * Get Current Active Round
  */
 const getCurrentRound = async (req, res) => {
   try {
-    const currentRound = await Result.getCurrentRound();
-
+    const currentRound = await Result.findOne({ status: "active" }).sort({ createdAt: -1 });
+    
     if (!currentRound) {
-      return res.json({
-        success: true,
-        message: 'No active round currently',
-        data: {
-          hasActiveRound: false,
-          round: null
-        }
+      return res.status(404).json({
+        success: false,
+        message: "No active round found"
       });
     }
 
-    // Get user's selections for current round if authenticated
+    // If user is authenticated, get their selections
     let userSelections = [];
     if (req.user) {
       userSelections = await NumberSelection.find({
-        userId: req.user.id,
-        roundId: currentRound.roundId,
-        status: 'pending'
+        user: req.user.id,
+        round: currentRound._id,
+        status: "active"
       });
     }
-
-    // Get round statistics
-    const roundStats = await NumberSelection.aggregate([
-      { $match: { roundId: currentRound.roundId } },
-      {
-        $group: {
-          _id: '$classType',
-          totalBets: { $sum: 1 },
-          totalAmount: { $sum: '$amount' }
-        }
-      }
-    ]);
-
-    const statsMap = {};
-    roundStats.forEach(stat => {
-      statsMap[stat._id] = {
-        totalBets: stat.totalBets,
-        totalAmount: stat.totalAmount
-      };
-    });
-
+    
+    // Calculate time remaining
+    const endTime = new Date(currentRound.endTime).getTime();
+    const currentTime = new Date().getTime();
+    const timeRemaining = Math.max(0, endTime - currentTime);
+    
     res.json({
       success: true,
-      message: 'Current round information retrieved',
+      message: "Current round retrieved successfully",
       data: {
-        hasActiveRound: true,
         round: {
-          roundId: currentRound.roundId,
+          id: currentRound._id,
+          roundNumber: currentRound.roundNumber,
+          status: currentRound.status,
           startTime: currentRound.startTime,
           endTime: currentRound.endTime,
-          timeRemaining: Math.max(0, currentRound.endTime - new Date()),
-          status: currentRound.status
+          timeRemaining
         },
-        userSelections,
-        statistics: {
-          classA: statsMap.A || { totalBets: 0, totalAmount: 0 },
-          classB: statsMap.B || { totalBets: 0, totalAmount: 0 },
-          classC: statsMap.C || { totalBets: 0, totalAmount: 0 }
-        }
+        userSelections: userSelections.map(s => ({
+          id: s._id,
+          number: s.number,
+          classType: s.classType,
+          amount: s.amount
+        }))
       }
     });
-
+    
   } catch (error) {
-    console.error('Get current round error:', error);
+    console.error("Error getting current round:", error);
     res.status(500).json({
       success: false,
-      message: 'Internal server error'
+      message: "Error retrieving current round"
     });
   }
 };
 
 /**
- * Get Valid Numbers for a Class
+ * Get Valid Numbers for a Given Class
  */
 const getValidNumbers = async (req, res) => {
   try {
     const { classType } = req.params;
-
-    if (!['A', 'B', 'C'].includes(classType)) {
+    
+    if (!["A", "B", "C"].includes(classType)) {
       return res.status(400).json({
         success: false,
-        message: 'Invalid class type. Must be A, B, or C'
+        message: "Invalid class type. Must be A, B, or C"
       });
     }
-
+    
     const validNumbers = generateValidNumbers(classType);
-
+    
     res.json({
       success: true,
-      message: `Valid numbers for class ${classType} retrieved`,
+      message: `Valid numbers for class ${classType} retrieved successfully`,
       data: {
         classType,
-        numbers: validNumbers,
-        count: validNumbers.length,
-        description: {
-          A: 'All same digits (111, 222, 333, etc.)',
-          B: 'Exactly two same digits (112, 223, 334, etc.)',
-          C: 'All different digits (123, 456, 789, etc.)'
-        }[classType]
+        validNumbers
       }
     });
-
+    
   } catch (error) {
-    console.error('Get valid numbers error:', error);
+    console.error("Error getting valid numbers:", error);
     res.status(500).json({
       success: false,
-      message: 'Internal server error'
+      message: "Error retrieving valid numbers"
     });
   }
 };
 
 /**
- * Get Game Rules and Information
+ * Get Game Information
  */
 const getGameInfo = async (req, res) => {
   try {
+    const gameInfo = {
+      title: "3 Digit Number Game",
+      description: "Select numbers from different classes to win prizes",
+      rules: [
+        "Select a 3-digit number from class A, B, or C",
+        "Each class has different valid numbers",
+        "Class A: numbers where all digits add up to a multiple of 3",
+        "Class B: numbers where all digits add up to a multiple of 3 plus 1",
+        "Class C: numbers where all digits add up to a multiple of 3 plus 2",
+        "Minimum bet amount: $10, Maximum: $1000",
+        "Winners are announced at the end of each round",
+        "One winning number is drawn for each class"
+      ],
+      prizes: {
+        exactMatch: "90x your bet amount",
+        classMatch: "5x your bet amount"
+      },
+      classes: {
+        A: "Sum of digits is divisible by 3 (e.g., 102, 300, 999)",
+        B: "Sum of digits mod 3 = 1 (e.g., 101, 200, 407)",
+        C: "Sum of digits mod 3 = 2 (e.g., 103, 301, 808)"
+      }
+    };
+    
     res.json({
       success: true,
-      message: 'Game information retrieved',
-      data: {
-        rules: {
-          classA: {
-            name: 'Class A',
-            description: 'All three digits are the same',
-            examples: ['111', '222', '333', '444', '555', '666', '777', '888', '999'],
-            totalNumbers: 9,
-            winMultiplier: 100,
-            probability: '1/9 = 11.11%'
-          },
-          classB: {
-            name: 'Class B',
-            description: 'Exactly two digits are the same',
-            examples: ['112', '121', '211', '223', '232', '322'],
-            totalNumbers: 252, // Calculated based on combinations
-            winMultiplier: 10,
-            probability: '252/1000 = 25.2%'
-          },
-          classC: {
-            name: 'Class C',
-            description: 'All three digits are different',
-            examples: ['123', '456', '789', '012', '345'],
-            totalNumbers: 720, // Calculated based on permutations
-            winMultiplier: 5,
-            probability: '720/1000 = 72%'
-          }
-        },
-        gameFlow: [
-          'Select a class (A, B, or C)',
-          'Choose a 3-digit number belonging to that class',
-          'Place your bet amount',
-          'Wait for the round to end (1 hour rounds)',
-          'Admin announces winning numbers',
-          'If your number matches, you win the multiplier amount!'
-        ],
-        betLimits: {
-          minimum: 1,
-          maximum: 10000 // Can be configured
-        },
-        roundDuration: '1 hour',
-        payoutStructure: {
-          classA: 'Bet Amount × 100',
-          classB: 'Bet Amount × 10',
-          classC: 'Bet Amount × 5'
-        }
-      }
+      message: "Game information retrieved successfully",
+      data: gameInfo
     });
-
+    
   } catch (error) {
-    console.error('Get game info error:', error);
+    console.error("Error getting game info:", error);
     res.status(500).json({
       success: false,
-      message: 'Internal server error'
+      message: "Error retrieving game information"
     });
   }
 };
@@ -356,185 +285,183 @@ const getGameInfo = async (req, res) => {
  */
 const getRecentResults = async (req, res) => {
   try {
-    const limit = parseInt(req.query.limit) || 10;
     const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
-
-    const results = await Result.find({ status: 'completed' })
+    
+    const completedRounds = await Result.find({ status: "completed" })
       .sort({ endTime: -1 })
-      .limit(limit)
-      .skip(skip);
-
-    const totalResults = await Result.countDocuments({ status: 'completed' });
-
+      .skip(skip)
+      .limit(limit);
+    
+    const totalCount = await Result.countDocuments({ status: "completed" });
+    
     res.json({
       success: true,
-      message: 'Recent results retrieved',
+      message: "Recent results retrieved successfully",
       data: {
-        results: results.map(result => ({
-          roundId: result.roundId,
-          winningNumbers: {
-            classA: result.classA.winningNumber,
-            classB: result.classB.winningNumber,
-            classC: result.classC.winningNumber
-          },
-          startTime: result.startTime,
-          endTime: result.endTime,
-          statistics: {
-            totalParticipants: result.totalParticipants,
-            totalRevenue: result.totalRevenue,
-            totalPayout: result.totalPayout,
-            winnersCount: result.winners.length
-          }
+        results: completedRounds.map(round => ({
+          id: round._id,
+          roundNumber: round.roundNumber,
+          endTime: round.endTime,
+          winningNumbers: round.winningNumbers
         })),
         pagination: {
           currentPage: page,
-          totalPages: Math.ceil(totalResults / limit),
-          totalResults,
-          hasNextPage: page < Math.ceil(totalResults / limit),
-          hasPrevPage: page > 1
+          totalPages: Math.ceil(totalCount / limit),
+          totalCount,
+          hasNext: page < Math.ceil(totalCount / limit),
+          hasPrev: page > 1
         }
       }
     });
-
+    
   } catch (error) {
-    console.error('Get recent results error:', error);
+    console.error("Error getting recent results:", error);
     res.status(500).json({
       success: false,
-      message: 'Internal server error'
+      message: "Error retrieving recent results"
     });
   }
 };
 
 /**
- * Cancel Number Selection (if round hasn't ended)
+ * Cancel a Number Selection
  */
 const cancelSelection = async (req, res) => {
   try {
     const { selectionId } = req.params;
     const userId = req.user.id;
-
+    
+    // Find the selection and verify it belongs to this user
     const selection = await NumberSelection.findOne({
       _id: selectionId,
-      userId,
-      status: 'pending'
+      user: userId,
+      status: "active"
     });
-
+    
     if (!selection) {
       return res.status(404).json({
         success: false,
-        message: 'Selection not found or already processed'
+        message: "Selection not found or already cancelled"
       });
     }
-
-    // Check if round is still active
-    const round = await Result.findOne({ roundId: selection.roundId });
-    if (!round || round.status !== 'active' || new Date() > round.endTime) {
+    
+    // Get the round to verify it's still active
+    const round = await Result.findOne({
+      _id: selection.round
+    });
+    
+    if (!round || round.status !== "active") {
       return res.status(400).json({
         success: false,
-        message: 'Cannot cancel selection. Round has already ended'
+        message: "Cannot cancel selection as the round is no longer active"
       });
     }
-
-    // Refund amount to user wallet
+    
+    // Calculate time remaining in round
+    const endTime = new Date(round.endTime).getTime();
+    const currentTime = new Date().getTime();
+    const timeRemaining = Math.max(0, endTime - currentTime);
+    
+    // Only allow cancellation if more than 30 seconds remaining
+    const minCancellationTime = 30 * 1000; // 30 seconds in milliseconds
+    if (timeRemaining < minCancellationTime) {
+      return res.status(400).json({
+        success: false,
+        message: `Cannot cancel selection in the last 30 seconds of the round`
+      });
+    }
+    
+    // Update selection status
+    selection.status = "cancelled";
+    
+    // Refund user's wallet
     const user = await User.findById(userId);
-    const balanceBefore = user.wallet;
-    user.wallet += selection.amount;
+    user.wallet.balance += selection.amount;
     
-    // Clear selected number from user profile
-    user.selectedNumbers[`class${selection.classType}`] = {
-      number: null,
-      amount: 0,
-      placedAt: null,
-      roundId: null
-    };
-    
-    await user.save();
-
-    // Delete selection
-    await NumberSelection.findByIdAndDelete(selectionId);
-
-    // Create refund transaction
-    await WalletTransaction.createTransaction({
-      userId,
-      type: 'credit',
+    // Create wallet transaction
+    const transaction = new WalletTransaction({
+      user: userId,
       amount: selection.amount,
-      source: 'refund',
-      description: `Refund for cancelled selection - Class ${selection.classType}, Number: ${selection.number}`,
-      balanceBefore,
-      balanceAfter: user.wallet,
-      roundId: selection.roundId,
-      metadata: {
-        classType: selection.classType,
-        selectedNumber: selection.number,
-        originalSelectionId: selectionId
+      type: "refund",
+      description: `Refund for cancelled bet on number ${selection.number} in round ${round.roundNumber}`,
+      balanceAfter: user.wallet.balance,
+      relatedEntity: {
+        type: "selection",
+        id: selection._id
       }
     });
-
+    
+    // Save all changes in a transaction
+    await Promise.all([
+      selection.save(),
+      user.save(),
+      transaction.save()
+    ]);
+    
     res.json({
       success: true,
-      message: 'Selection cancelled and amount refunded',
+      message: "Selection cancelled successfully",
       data: {
-        refundedAmount: selection.amount,
-        newWalletBalance: user.wallet
+        walletBalance: user.wallet.balance
       }
     });
-
+    
   } catch (error) {
-    console.error('Cancel selection error:', error);
+    console.error("Error cancelling selection:", error);
     res.status(500).json({
       success: false,
-      message: 'Internal server error'
+      message: "Error cancelling selection"
     });
   }
 };
 
 /**
- * Get User's Current Selections
+ * Get Current User Selections
  */
 const getCurrentSelections = async (req, res) => {
   try {
     const userId = req.user.id;
-
+    
     // Get current active round
-    const currentRound = await Result.getCurrentRound();
+    const currentRound = await Result.findOne({ status: "active" }).sort({ createdAt: -1 });
+    
     if (!currentRound) {
-      return res.json({
-        success: true,
-        message: 'No active round',
-        data: {
-          selections: [],
-          hasActiveRound: false
-        }
+      return res.status(404).json({
+        success: false,
+        message: "No active round found"
       });
     }
-
+    
     // Get user's selections for current round
     const selections = await NumberSelection.find({
-      userId,
-      roundId: currentRound.roundId,
-      status: 'pending'
+      user: userId,
+      round: currentRound._id,
+      status: "active"
     });
-
+    
     res.json({
       success: true,
-      message: 'Current selections retrieved',
+      message: "Current selections retrieved successfully",
       data: {
-        selections,
-        hasActiveRound: true,
-        round: {
-          roundId: currentRound.roundId,
-          endTime: currentRound.endTime,
-          timeRemaining: Math.max(0, currentRound.endTime - new Date())
-        }
+        roundNumber: currentRound.roundNumber,
+        endTime: currentRound.endTime,
+        selections: selections.map(s => ({
+          id: s._id,
+          number: s.number,
+          classType: s.classType,
+          amount: s.amount,
+          createdAt: s.createdAt
+        }))
       }
     });
-
+    
   } catch (error) {
-    console.error('Get current selections error:', error);
+    console.error("Error getting current selections:", error);
     res.status(500).json({
       success: false,
-      message: 'Internal server error'
+      message: "Error retrieving current selections"
     });
   }
 };
@@ -543,17 +470,6 @@ const getCurrentSelections = async (req, res) => {
  * Get All Game Rounds with Pagination
  */
 const getAllRounds = async (req, res) => {
-
-module.exports = {
-  selectNumber,
-  getCurrentRound,
-  getValidNumbers,
-  getGameInfo,
-  getRecentResults,
-  cancelSelection,
-  getCurrentSelections,
-  getAllRounds
-};
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
@@ -570,7 +486,7 @@ module.exports = {
     
     res.json({
       success: true,
-      message: 'Game rounds retrieved successfully',
+      message: "Game rounds retrieved successfully",
       data: {
         rounds,
         pagination: {
@@ -584,10 +500,21 @@ module.exports = {
     });
     
   } catch (error) {
-    console.error('Error fetching game rounds:', error);
+    console.error("Error fetching game rounds:", error);
     res.status(500).json({
       success: false,
-      message: 'Error fetching game rounds'
+      message: "Error fetching game rounds"
     });
   }
+};
+
+module.exports = {
+  selectNumber,
+  getCurrentRound,
+  getValidNumbers,
+  getGameInfo,
+  getRecentResults,
+  cancelSelection,
+  getCurrentSelections,
+  getAllRounds
 };

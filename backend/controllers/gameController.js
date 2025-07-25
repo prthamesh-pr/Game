@@ -116,11 +116,9 @@ const selectNumber = async (req, res) => {
     });
     
     // Save all changes in a transaction
-    await Promise.all([
-      newSelection.save(),
-      user.save(),
-      transaction.save()
-    ]);
+    await newSelection.save();
+    await user.save();
+    await transaction.save();
     
     res.status(201).json({
       success: true,

@@ -30,6 +30,8 @@ A full-stack responsive gaming application with **Backend API**, **Admin Panel**
    vercel --prod
    ```
 
+> **Note:** This project uses npm as its package manager. Please use npm commands (not yarn) to ensure consistent dependency management.
+
 ### For Backend & Admin Panel
 ```bash
 # Using the batch file (Windows)

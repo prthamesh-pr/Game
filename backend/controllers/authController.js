@@ -11,12 +11,18 @@ const registerUser = async (req, res) => {
     const { username, mobileNumber, email, password } = req.body;
 
     // Check if user already exists
+    const queryConditions = [
+      { username: username },
+      { email: email }
+    ];
+    
+    // Only check mobile number if provided
+    if (mobileNumber && mobileNumber.trim() !== '') {
+      queryConditions.push({ mobileNumber: mobileNumber });
+    }
+    
     const existingUser = await User.findOne({
-      $or: [
-        { username: username },
-        { email: email },
-        ...(mobileNumber ? [{ mobileNumber: mobileNumber }] : [])
-      ]
+      $or: queryConditions
     });
 
     if (existingUser) {
@@ -62,7 +68,7 @@ const registerUser = async (req, res) => {
     };
     
     // Only add mobileNumber if it's provided and valid
-    if (mobileNumber) {
+    if (mobileNumber && mobileNumber.trim() !== '') {
       userData.mobileNumber = mobileNumber;
     }
     

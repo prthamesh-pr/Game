@@ -25,6 +25,10 @@
   ],
   "author": "Game 999 Team",
   "license": "MIT",
+  "engines": {
+    "node": ">=14.0.0",
+    "npm": ">=6.0.0"
+  },
   "devDependencies": {
     "concurrently": "^8.2.2"
   },

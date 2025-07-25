@@ -96,18 +96,22 @@ const selectNumber = async (req, res) => {
     });
     
     // Deduct amount from user's wallet
+    const balanceBefore = user.walletBalance;
     user.walletBalance -= amount;
     
     // Create wallet transaction
     const transaction = new WalletTransaction({
-      user: userId,
-      amount: -amount,
-      type: "bet",
+      userId: userId,
+      type: "debit",
+      amount: amount,
+      source: "game-play",
       description: `Bet placed for number ${number} in round ${currentRound.roundId}`,
+      balanceBefore: balanceBefore,
       balanceAfter: user.walletBalance,
-      relatedEntity: {
-        type: "selection",
-        id: newSelection._id
+      roundId: currentRound.roundId,
+      metadata: {
+        classType: classType,
+        selectedNumber: number
       }
     });
     

@@ -165,6 +165,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           });
                         },
                       ),
+                      helperText: 'Must include lowercase, uppercase & number',
+                      helperMaxLines: 2,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
@@ -175,6 +177,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       }
                       if (value.length < 6) {
                         return 'Password must be at least 6 characters';
+                      }
+                      // Check for at least one lowercase letter
+                      if (!value.contains(RegExp(r'[a-z]'))) {
+                        return 'Password must contain at least one lowercase letter';
+                      }
+                      // Check for at least one uppercase letter
+                      if (!value.contains(RegExp(r'[A-Z]'))) {
+                        return 'Password must contain at least one uppercase letter';
+                      }
+                      // Check for at least one number
+                      if (!value.contains(RegExp(r'[0-9]'))) {
+                        return 'Password must contain at least one number';
                       }
                       return null;
                     },

@@ -78,6 +78,31 @@ class _BetDialogState extends State<BetDialog> {
     });
   }
 
+  Widget _quickBetButton(int amount) {
+    return InkWell(
+      onTap: () {
+        _amountController.text = amount.toString();
+        _validateAmount();
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: AppColors.primary.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: AppColors.primary.withOpacity(0.3)),
+        ),
+        child: Text(
+          '₹$amount',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+            color: AppColors.primary,
+          ),
+        ),
+      ),
+    );
+  }
+  
   @override
   Widget build(BuildContext context) {
     return Dialog(
@@ -133,16 +158,28 @@ class _BetDialogState extends State<BetDialog> {
               onChanged: (_) => _validateAmount(),
               decoration: InputDecoration(
                 labelText: 'Tokens to Bet',
-                prefixText: '',
+                prefixText: '₹',
                 suffixText: 'Tokens',
                 errorText: _errorText,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
                 hintText: 'Enter token amount',
+                filled: true,
+                fillColor: Colors.grey[100],
               ),
             ),
-            const SizedBox(height: 5),
+            const SizedBox(height: 10),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                _quickBetButton(50),
+                _quickBetButton(100),
+                _quickBetButton(200),
+                _quickBetButton(500),
+              ],
+            ),
+            const SizedBox(height: 15),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [

@@ -76,7 +76,6 @@ class _LiveStatsWidgetState extends State<LiveStatsWidget>
   late AnimationController _pulseController;
   late Animation<double> _pulseAnimation;
 
-  int _onlineUsers = 1247;
   int _activeGames = 89;
 
   @override
@@ -99,9 +98,7 @@ class _LiveStatsWidgetState extends State<LiveStatsWidget>
     Future.delayed(const Duration(seconds: 3), () {
       if (mounted) {
         setState(() {
-          _onlineUsers += (DateTime.now().millisecond % 10) - 5;
           _activeGames += (DateTime.now().millisecond % 6) - 3;
-          _onlineUsers = _onlineUsers.clamp(1000, 2000);
           _activeGames = _activeGames.clamp(50, 150);
         });
         _startLiveUpdates();
@@ -136,27 +133,11 @@ class _LiveStatsWidgetState extends State<LiveStatsWidget>
       ),
       child: Column(
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildLiveStatItem(
-                'Online Players',
-                _onlineUsers,
-                Icons.people,
-                AppColors.success,
-              ),
-              Container(
-                width: 1,
-                height: 40,
-                color: AppColors.primary.withValues(alpha: 0.2),
-              ),
-              _buildLiveStatItem(
-                'Active Games',
-                _activeGames,
-                Icons.sports_esports,
-                AppColors.warning,
-              ),
-            ],
+          _buildLiveStatItem(
+            'Active Games',
+            _activeGames,
+            Icons.sports_esports,
+            AppColors.warning,
           ),
           const SizedBox(height: 10),
           AnimatedBuilder(

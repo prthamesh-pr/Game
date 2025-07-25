@@ -39,11 +39,11 @@ class Utils {
   static String getClassDescription(String gameClass) {
     switch (gameClass) {
       case 'A':
-        return 'Single Page Game';
+        return 'Class A: Triple Same Digits\nNumbers like 111, 222, 333, etc. where all three digits are the same.';
       case 'B':
-        return 'Double Page Game';
+        return 'Class B: Double Same Digits\nNumbers like 112, 113, 223, etc. where exactly two digits are the same.';
       case 'C':
-        return 'Triple Page Game';
+        return 'Class C: All Different Digits\nNumbers like 123, 456, 789, etc. where all three digits are different.';
       default:
         return '';
     }

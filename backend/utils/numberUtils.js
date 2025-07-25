@@ -14,32 +14,28 @@ const isValid3DigitNumber = (number) => {
  */
 const isClassA = (number) => {
   if (!isValid3DigitNumber(number)) return false;
-  const digits = number.split('');
-  return digits[0] === digits[1] && digits[1] === digits[2];
+  const classANumbers = ['111', '222', '333', '444', '555', '666', '777', '888', '999'];
+  return classANumbers.includes(number);
 };
 
 /**
- * Check if number belongs to Class B (exactly 2 same digits)
+ * Check if number belongs to Class B (double same digits)
  * @param {string} number - 3-digit number
  * @returns {boolean} Is Class B number
  */
 const isClassB = (number) => {
   if (!isValid3DigitNumber(number)) return false;
-  const digits = number.split('');
-  const uniqueDigits = [...new Set(digits)];
-  
-  // Must have exactly 2 unique digits (meaning 2 same + 1 different)
-  if (uniqueDigits.length !== 2) return false;
-  
-  // Count occurrences of each digit
-  const digitCounts = {};
-  digits.forEach(digit => {
-    digitCounts[digit] = (digitCounts[digit] || 0) + 1;
-  });
-  
-  // Should have one digit appearing twice and one appearing once
-  const counts = Object.values(digitCounts);
-  return counts.includes(2) && counts.includes(1);
+  const classBNumbers = [
+    '112', '113', '114', '115', '116', '117', '118', '119',
+    '223', '224', '225', '226', '227', '228', '229',
+    '334', '335', '336', '337', '338', '339',
+    '445', '446', '447', '448', '449',
+    '556', '557', '558', '559',
+    '667', '668', '669',
+    '778', '779',
+    '889'
+  ];
+  return classBNumbers.includes(number);
 };
 
 /**
@@ -49,9 +45,31 @@ const isClassB = (number) => {
  */
 const isClassC = (number) => {
   if (!isValid3DigitNumber(number)) return false;
-  const digits = number.split('');
-  const uniqueDigits = [...new Set(digits)];
-  return uniqueDigits.length === 3; // All digits are different
+  const classCNumbers = [
+    '123', '124', '125', '126', '127', '128', '129',
+    '134', '135', '136', '137', '138', '139',
+    '145', '146', '147', '148', '149',
+    '156', '157', '158', '159',
+    '167', '168', '169',
+    '178', '179', '189',
+    '234', '235', '236', '237', '238', '239',
+    '245', '246', '247', '248', '249',
+    '256', '257', '258', '259',
+    '267', '268', '269',
+    '278', '279', '289',
+    '345', '346', '347', '348', '349',
+    '356', '357', '358', '359',
+    '367', '368', '369',
+    '378', '379', '389',
+    '456', '457', '458', '459',
+    '467', '468', '469',
+    '478', '479', '489',
+    '567', '568', '569',
+    '578', '579', '589',
+    '678', '679', '689',
+    '789'
+  ];
+  return classCNumbers.includes(number);
 };
 
 /**
@@ -72,25 +90,54 @@ const determineNumberClass = (number) => {
  * @returns {string[]} Array of valid numbers
  */
 const generateValidNumbers = (classType) => {
-  const validNumbers = [];
-  
-  for (let i = 0; i <= 999; i++) {
-    const number = i.toString().padStart(3, '0');
+  switch (classType) {
+    case 'A':
+      // Class A: repeating digits
+      return ['111', '222', '333', '444', '555', '666', '777', '888', '999'];
     
-    switch (classType) {
-      case 'A':
-        if (isClassA(number)) validNumbers.push(number);
-        break;
-      case 'B':
-        if (isClassB(number)) validNumbers.push(number);
-        break;
-      case 'C':
-        if (isClassC(number)) validNumbers.push(number);
-        break;
-    }
+    case 'B':
+      // Class B: exactly 2 same digits
+      return [
+        '112', '113', '114', '115', '116', '117', '118', '119',
+        '223', '224', '225', '226', '227', '228', '229',
+        '334', '335', '336', '337', '338', '339',
+        '445', '446', '447', '448', '449',
+        '556', '557', '558', '559',
+        '667', '668', '669',
+        '778', '779',
+        '889'
+      ];
+    
+    case 'C':
+      // Class C: all different digits
+      return [
+        '123', '124', '125', '126', '127', '128', '129',
+        '134', '135', '136', '137', '138', '139',
+        '145', '146', '147', '148', '149',
+        '156', '157', '158', '159',
+        '167', '168', '169',
+        '178', '179', '189',
+        '234', '235', '236', '237', '238', '239',
+        '245', '246', '247', '248', '249',
+        '256', '257', '258', '259',
+        '267', '268', '269',
+        '278', '279', '289',
+        '345', '346', '347', '348', '349',
+        '356', '357', '358', '359',
+        '367', '368', '369',
+        '378', '379', '389',
+        '456', '457', '458', '459',
+        '467', '468', '469',
+        '478', '479', '489',
+        '567', '568', '569',
+        '578', '579', '589',
+        '678', '679', '689',
+        '789'
+      ];
+    
+    default:
+      return [];
   }
-  
-  return validNumbers;
 };
 
 /**

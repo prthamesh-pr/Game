@@ -254,21 +254,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
           children: [
             _buildGameClassCard(
               'A',
-              'Single Page Game (111, 222, 333)',
+              'Triple Same Digits (111, 222, 333, ...)',
               AppColors.classA,
               context,
             ),
             const SizedBox(height: 12),
             _buildGameClassCard(
               'B',
-              'Double Page Game (112, 113, 221)',
+              'Double Same Digits (112, 113, 223, ...)',
               AppColors.classB,
               context,
             ),
             const SizedBox(height: 12),
             _buildGameClassCard(
               'C',
-              'Triple Page Game (123, 456, 789)',
+              'All Different Digits (123, 456, 789, ...)',
               AppColors.classC,
               context,
             ),

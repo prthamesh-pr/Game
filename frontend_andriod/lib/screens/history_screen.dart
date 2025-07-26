@@ -131,6 +131,14 @@ class HistoryScreen extends StatelessWidget {
                 ),
               ],
             ),
+            const SizedBox(height: 6),
+            Text(
+              formattedDate,
+              style: const TextStyle(
+                fontSize: 13,
+                color: AppColors.textLight,
+              ),
+            ),
             const SizedBox(height: 10),
             Row(
               children: [

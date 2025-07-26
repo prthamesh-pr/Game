@@ -179,8 +179,6 @@ class ProfileScreen extends StatelessWidget {
     AuthProvider authProvider,
     bool isLargeScreen,
   ) {
-    final user = authProvider.currentUser;
-
     return Column(
       children: [
         _buildActionButton(

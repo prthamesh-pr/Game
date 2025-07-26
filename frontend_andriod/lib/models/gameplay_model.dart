@@ -1,4 +1,5 @@
-import 'package:flutter/foundation.dart';
+// import 'package:flutter/foundation.dart';
+import 'package:intl/intl.dart';
 
 class RoundInfo {
   final String? startTime;
@@ -15,8 +16,6 @@ class RoundInfo {
     );
   }
 }
-import 'package:intl/intl.dart';
-import 'package:flutter/foundation.dart';
 
 class GamePlay {
   final String id;
@@ -67,23 +66,6 @@ class GamePlay {
       resultNumber: json['resultNumber'] as String?,
       roundInfo: json['roundInfo'] != null ? RoundInfo.fromJson(json['roundInfo']) : null,
     );
-
-class RoundInfo {
-  final String? startTime;
-  final String? endTime;
-  final bool resultDeclared;
-
-  RoundInfo({this.startTime, this.endTime, required this.resultDeclared});
-
-  factory RoundInfo.fromJson(Map<String, dynamic> json) {
-    return RoundInfo(
-      startTime: json['startTime'] as String?,
-      endTime: json['endTime'] as String?,
-      resultDeclared: json['resultDeclared'] == true,
-    );
-  }
-}
-}
   }
 
   String get formattedDate {
@@ -93,6 +75,5 @@ class RoundInfo {
   String get formattedTime {
     return DateFormat('hh:mm a').format(playedAt);
   }
-
 }
 

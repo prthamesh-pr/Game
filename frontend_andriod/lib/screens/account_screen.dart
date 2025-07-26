@@ -181,17 +181,41 @@ class _AccountScreenState extends State<AccountScreen> {
                               ),
                               onPressed: () async {
                                 final walletService = WalletService();
-                                final qrUrl = await walletService.fetchQrCodeUrl();
+                                final qrUrl = await walletService
+                                    .fetchQrCodeUrl();
                                 showDialog(
                                   context: context,
                                   builder: (context) => AddTokenDialog(
                                     qrImageUrl: qrUrl,
-                                    onSubmit: (amount, upiId, userName, paymentApp) async {
-                                      final success = await walletService.requestAddToken(amount, upiId, userName, paymentApp);
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        SnackBar(content: Text(success ? 'Token add request sent!' : 'Failed to send request'), backgroundColor: success ? Colors.green : Colors.red),
-                                      );
-                                    },
+                                    onSubmit:
+                                        (
+                                          amount,
+                                          upiId,
+                                          userName,
+                                          paymentApp,
+                                        ) async {
+                                          final success = await walletService
+                                              .requestAddToken(
+                                                amount,
+                                                upiId,
+                                                userName,
+                                                paymentApp,
+                                              );
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            SnackBar(
+                                              content: Text(
+                                                success
+                                                    ? 'Token add request sent!'
+                                                    : 'Failed to send request',
+                                              ),
+                                              backgroundColor: success
+                                                  ? Colors.green
+                                                  : Colors.red,
+                                            ),
+                                          );
+                                        },
                                   ),
                                 );
                               },
@@ -208,12 +232,29 @@ class _AccountScreenState extends State<AccountScreen> {
                                 showDialog(
                                   context: context,
                                   builder: (context) => WithdrawDialog(
-                                    onSubmit: (amount, phone, paymentApp) async {
-                                      final success = await walletService.requestWithdraw(amount, phone, paymentApp);
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        SnackBar(content: Text(success ? 'Withdrawal request sent!' : 'Failed to send request'), backgroundColor: success ? Colors.green : Colors.red),
-                                      );
-                                    },
+                                    onSubmit:
+                                        (amount, phone, paymentApp) async {
+                                          final success = await walletService
+                                              .requestWithdraw(
+                                                amount,
+                                                phone,
+                                                paymentApp,
+                                              );
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            SnackBar(
+                                              content: Text(
+                                                success
+                                                    ? 'Withdrawal request sent!'
+                                                    : 'Failed to send request',
+                                              ),
+                                              backgroundColor: success
+                                                  ? Colors.green
+                                                  : Colors.red,
+                                            ),
+                                          );
+                                        },
                                   ),
                                 );
                               },

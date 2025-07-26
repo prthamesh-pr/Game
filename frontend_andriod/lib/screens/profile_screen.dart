@@ -131,6 +131,7 @@ class ProfileScreen extends StatelessWidget {
           _buildInfoRow('ID', user.id, isLargeScreen),
           _buildInfoRow('Username', user.username, isLargeScreen),
           _buildInfoRow('Email', user.email, isLargeScreen),
+          _buildInfoRow('Mobile Number', user.mobileNumber, isLargeScreen),
           _buildInfoRow(
             'Token Balance',
             Utils.formatCurrency(user.walletBalance),
@@ -182,19 +183,6 @@ class ProfileScreen extends StatelessWidget {
 
     return Column(
       children: [
-        _buildActionButton(
-          icon: Icons.refresh,
-          label: 'Refresh Profile',
-          color: AppColors.info,
-          isLargeScreen: isLargeScreen,
-          onTap: () async {
-            if (user != null) {
-              await authProvider.refreshWalletBalance();
-              Utils.showToast('Profile refreshed successfully');
-            }
-          },
-        ),
-        SizedBox(height: isLargeScreen ? 16 : 12),
         _buildActionButton(
           icon: Icons.account_balance_wallet,
           label: 'View Transactions',

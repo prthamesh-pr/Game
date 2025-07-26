@@ -70,10 +70,12 @@ const validationRules = {
       .matches(/^[a-zA-Z0-9_]+$/)
       .withMessage('Username can only contain letters, numbers, and underscores'),
     body('mobileNumber')
-      .optional()
+      .notEmpty()
+      .withMessage('Mobile number is required')
       .matches(/^[6-9]\d{9}$/)
       .withMessage('Please enter a valid 10-digit mobile number'),
     body('email')
+      .optional()
       .isEmail()
       .withMessage('Please enter a valid email address')
       .normalizeEmail(),
@@ -96,25 +98,41 @@ const validationRules = {
 
   // Admin login validation
   adminLogin: [
-    body('email')
-      .isEmail()
-      .withMessage('Please enter a valid email address'),
+    body('identifier')
+      .notEmpty()
+      .withMessage('Please enter username or email'),
     body('password')
       .notEmpty()
       .withMessage('Password is required')
   ],
 
-  // Number selection validation
+  // Number selection validation (support Class D and single-digit numbers)
   numberSelection: [
-    body('classType')
-      .isIn(['A', 'B', 'C'])
-      .withMessage('Class type must be A, B, or C'),
-    body('number')
-      .matches(/^\d{3}$/)
-      .withMessage('Number must be exactly 3 digits'),
-    body('amount')
-      .isFloat({ min: 1 })
-      .withMessage('Bet amount must be at least 1')
+    body('selections').custom((value, { req }) => {
+      if (!value && (!req.body.classType || !req.body.number || !req.body.amount)) {
+        throw new Error('Selections array or single selection required');
+      }
+      if (Array.isArray(value)) {
+        for (const sel of value) {
+          if (!['A', 'B', 'C', 'D'].includes(sel.classType)) {
+            throw new Error('Class type must be A, B, C, or D');
+          }
+          if (sel.classType === 'D') {
+            if (!/^[1-9]$/.test(sel.number)) {
+              throw new Error('Number must be 1-9 for D');
+            }
+          } else {
+            if (!/^\d{3}$/.test(sel.number)) {
+              throw new Error('Number must be 3 digits for A/B/C');
+            }
+          }
+          if (typeof sel.amount !== 'number' || sel.amount < 1) {
+            throw new Error('Bet amount must be at least 1');
+          }
+        }
+      }
+      return true;
+    })
   ],
 
   // Wallet transaction validation

@@ -23,9 +23,11 @@ async function createActiveRound() {
     const lastResult = await Result.findOne().sort({ roundNumber: -1 });
     const nextRoundNumber = lastResult ? lastResult.roundNumber + 1 : 1;
 
-    // Create new active round
-    const startTime = new Date();
-    const endTime = new Date(startTime.getTime() + 30 * 60 * 1000); // 30 minutes from now
+    // Create new active round: starts at the beginning of the current hour, lasts 50 minutes, locked for 10 minutes
+    const now = new Date();
+    const startTime = new Date(now);
+    startTime.setMinutes(0, 0, 0); // Set to start of hour
+    const endTime = new Date(startTime.getTime() + 50 * 60 * 1000); // 50 minutes betting window
 
     const activeRound = new Result({
       roundId: `R${nextRoundNumber}-${Date.now()}`,
@@ -46,6 +48,12 @@ async function createActiveRound() {
         winnersCount: 0
       },
       classC: {
+        totalBets: 0,
+        totalAmount: 0,
+        totalWinnings: 0,
+        winnersCount: 0
+      },
+      classD: {
         totalBets: 0,
         totalAmount: 0,
         totalWinnings: 0,

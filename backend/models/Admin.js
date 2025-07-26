@@ -9,6 +9,14 @@ const adminSchema = new mongoose.Schema({
     trim: true,
     match: [/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/, 'Please enter a valid email']
   },
+  username: {
+    type: String,
+    required: [true, 'Username is required'],
+    trim: true,
+    unique: true,
+    minlength: [3, 'Username must be at least 3 characters'],
+    maxlength: [30, 'Username cannot exceed 30 characters']
+  },
   passwordHash: {
     type: String,
     required: [true, 'Password is required'],
@@ -118,10 +126,14 @@ adminSchema.methods.updateLastLogin = function() {
 };
 
 // Static method to find admin by email
-adminSchema.statics.findByCredentials = async function(email, password) {
-  const admin = await this.findOne({ 
-    email: email.toLowerCase(),
-    isActive: true 
+adminSchema.statics.findByCredentials = async function(identifier, password) {
+  // identifier can be email or username
+  const admin = await this.findOne({
+    $or: [
+      { email: identifier.toLowerCase() },
+      { username: identifier }
+    ],
+    isActive: true
   });
 
   if (!admin) {

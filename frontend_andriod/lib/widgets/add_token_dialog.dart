@@ -2,8 +2,13 @@ import 'package:flutter/material.dart';
 
 class AddTokenDialog extends StatefulWidget {
   final String qrImageUrl;
-  final Function(int amount, String upiId, String userName, String paymentApp) onSubmit;
-  const AddTokenDialog({super.key, required this.qrImageUrl, required this.onSubmit});
+  final Function(int amount, String upiId, String userName, String paymentApp)
+  onSubmit;
+  const AddTokenDialog({
+    super.key,
+    required this.qrImageUrl,
+    required this.onSubmit,
+  });
 
   @override
   State<AddTokenDialog> createState() => _AddTokenDialogState();
@@ -23,12 +28,15 @@ class _AddTokenDialogState extends State<AddTokenDialog> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Image.network(widget.qrImageUrl, height: 120),
+            Image.asset('assets/images/app_icon.png', height: 120),
             const SizedBox(height: 12),
             TextField(
               controller: _amountController,
               keyboardType: TextInputType.number,
-              decoration: const InputDecoration(labelText: 'Enter Amount'),
+              decoration: const InputDecoration(
+                labelText: 'Enter Amount (Tokens)',
+                suffixText: 'Tokens',
+              ),
             ),
             const SizedBox(height: 8),
             TextField(
@@ -48,8 +56,11 @@ class _AddTokenDialogState extends State<AddTokenDialog> {
                 DropdownMenuItem(value: 'PhonePe', child: Text('PhonePe')),
                 DropdownMenuItem(value: 'Paytm', child: Text('Paytm')),
               ],
-              onChanged: (val) => setState(() => _selectedApp = val ?? 'GooglePay'),
-              decoration: const InputDecoration(labelText: 'Select Payment App'),
+              onChanged: (val) =>
+                  setState(() => _selectedApp = val ?? 'GooglePay'),
+              decoration: const InputDecoration(
+                labelText: 'Select Payment App',
+              ),
             ),
           ],
         ),

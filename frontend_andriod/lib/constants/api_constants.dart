@@ -6,8 +6,8 @@ class ApiConstants {
   static const String withdrawEndpoint = '/api/wallet/withdraw';
   // Base URL for API
   static const String baseUrl =
-       'https://game-39rz.onrender.com'; // Production server
-      //'http://192.168.1.7:5000'; // Local server for testing
+      'https://game-39rz.onrender.com'; // Production server
+  //'http://192.168.1.7:5000'; // Local server for testing
 
   // API endpoints
   static const String registerEndpoint = '/api/auth/register';

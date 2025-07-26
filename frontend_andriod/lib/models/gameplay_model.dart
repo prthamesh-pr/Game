@@ -1,4 +1,22 @@
+import 'package:flutter/foundation.dart';
+
+class RoundInfo {
+  final String? startTime;
+  final String? endTime;
+  final bool resultDeclared;
+
+  const RoundInfo({this.startTime, this.endTime, required this.resultDeclared});
+
+  factory RoundInfo.fromJson(Map<String, dynamic> json) {
+    return RoundInfo(
+      startTime: json['startTime'] as String?,
+      endTime: json['endTime'] as String?,
+      resultDeclared: json['resultDeclared'] == true,
+    );
+  }
+}
 import 'package:intl/intl.dart';
+import 'package:flutter/foundation.dart';
 
 class GamePlay {
   final String id;
@@ -10,6 +28,8 @@ class GamePlay {
   final bool isWinner;
   final String? resultNumber; // Winning number for that day/game
 
+  final RoundInfo? roundInfo;
+
   GamePlay({
     required this.id,
     required this.userId,
@@ -19,6 +39,7 @@ class GamePlay {
     required this.playedAt,
     required this.isWinner,
     this.resultNumber,
+    this.roundInfo,
   });
 
   Map<String, dynamic> toJson() {
@@ -44,7 +65,25 @@ class GamePlay {
       playedAt: DateTime.parse(json['playedAt']),
       isWinner: json['isWinner'] as bool,
       resultNumber: json['resultNumber'] as String?,
+      roundInfo: json['roundInfo'] != null ? RoundInfo.fromJson(json['roundInfo']) : null,
     );
+
+class RoundInfo {
+  final String? startTime;
+  final String? endTime;
+  final bool resultDeclared;
+
+  RoundInfo({this.startTime, this.endTime, required this.resultDeclared});
+
+  factory RoundInfo.fromJson(Map<String, dynamic> json) {
+    return RoundInfo(
+      startTime: json['startTime'] as String?,
+      endTime: json['endTime'] as String?,
+      resultDeclared: json['resultDeclared'] == true,
+    );
+  }
+}
+}
   }
 
   String get formattedDate {
@@ -54,4 +93,6 @@ class GamePlay {
   String get formattedTime {
     return DateFormat('hh:mm a').format(playedAt);
   }
+
 }
+

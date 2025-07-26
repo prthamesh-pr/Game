@@ -14,62 +14,15 @@ const {
  */
 const selectNumber = async (req, res) => {
   try {
-    const { classType, number, amount } = req.body;
     const userId = req.user.id;
-
-    // Validate inputs
-    if (!["A", "B", "C", "D"].includes(classType)) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid class type. Must be A, B, C, or D"
-      });
-    }
-
-    if (classType === 'D') {
-      if (!/^[1-9]$/.test(number)) {
-        return res.status(400).json({
-          success: false,
-          message: "Number must be a single digit (1-9) for Class D"
-        });
-      }
-    } else {
-      if (!isValid3DigitNumber(number)) {
-        return res.status(400).json({
-          success: false,
-          message: "Number must be a valid 3-digit number"
-        });
-      }
-    }
-
-    const minAmount = 10;  // Minimum bet amount
-    const maxAmount = 1000;  // Maximum bet amount
-    
-    if (amount < minAmount || amount > maxAmount) {
-      return res.status(400).json({
-        success: false,
-        message: `Amount must be between ${minAmount} and ${maxAmount}`
-      });
-    }
-    
-    // Check if number is valid for the selected class
-    if (classType !== 'D') {
-      const calculatedClass = determineNumberClass(number);
-      if (calculatedClass !== classType) {
-        return res.status(400).json({
-          success: false,
-          message: `Number ${number} belongs to class ${calculatedClass}, not class ${classType}`
-        });
-      }
-    }
+    const selections = Array.isArray(req.body.selections) ? req.body.selections : [req.body];
 
     // Get current active round
     const currentRound = await Result.findOne({ status: "active" }).sort({ createdAt: -1 });
     if (!currentRound) {
-      return res.status(400).json({
-        success: false,
-        message: "No active round found"
-      });
+      return res.status(400).json({ success: false, message: "No active round found" });
     }
+
     // Enforce betting window: only allow bets in first 50 minutes of each hour
     const now = new Date();
     const roundStart = new Date(currentRound.startTime);
@@ -77,99 +30,95 @@ const selectNumber = async (req, res) => {
     const minutesSinceStart = Math.floor((now - roundStart) / 60000);
     const minutesToEnd = Math.floor((roundEnd - now) / 60000);
     if (minutesSinceStart < 0 || minutesToEnd < 0) {
-      return res.status(400).json({
-        success: false,
-        message: "Betting is not open for this round."
-      });
+      return res.status(400).json({ success: false, message: "Betting is not open for this round." });
     }
     if (minutesToEnd < 10) {
-      return res.status(400).json({
-        success: false,
-        message: "Betting is locked for the last 10 minutes of the round."
-      });
+      return res.status(400).json({ success: false, message: "Betting is locked for the last 10 minutes of the round." });
     }
-    
-    // Check if user has sufficient balance
+
+    // Get user and check total amount
     const user = await User.findById(userId);
-    if (user.walletBalance < amount) {
-      return res.status(400).json({
-        success: false,
-        message: "Insufficient balance"
-      });
-    }
-    
-    // Check if number is already selected by this user in current round
-    const existingSelection = await NumberSelection.findOne({
-      userId: userId,
-      roundId: currentRound.roundId,
-      number,
-      classType
-    });
-    
-    if (existingSelection) {
-      return res.status(400).json({
-        success: false,
-        message: "You have already selected this number for the current round"
-      });
-    }
-    
-    // Create new selection
-    const newSelection = new NumberSelection({
-      userId: userId,
-      roundId: currentRound.roundId,
-      number,
-      classType,
-      amount,
-      status: "pending"
-    });
-    
-    // Deduct amount from user's wallet
-    const balanceBefore = user.walletBalance;
-    user.walletBalance -= amount;
-    
-    // Create wallet transaction
-    const transaction = new WalletTransaction({
-      userId: userId,
-      type: "debit",
-      amount: amount,
-      source: "game-play",
-      description: `Bet placed for number ${number} in round ${currentRound.roundId}`,
-      balanceBefore: balanceBefore,
-      balanceAfter: user.walletBalance,
-      roundId: currentRound.roundId,
-      metadata: {
-        classType: classType,
-        selectedNumber: number
+    let totalAmount = 0;
+    let results = [];
+
+    for (const sel of selections) {
+      const { classType, number, amount } = sel;
+      // Validate inputs
+      if (!["A", "B", "C", "D"].includes(classType)) {
+        results.push({ success: false, message: `Invalid class type for ${number}` });
+        continue;
       }
-    });
-    
-    // Save all changes in a transaction
-    await newSelection.save();
+      if (classType === 'D') {
+        if (!/^[1-9]$/.test(number)) {
+          results.push({ success: false, message: `Number must be 1-9 for Class D (${number})` });
+          continue;
+        }
+      } else {
+        if (!isValid3DigitNumber(number)) {
+          results.push({ success: false, message: `Number must be a valid 3-digit number (${number})` });
+          continue;
+        }
+        const calculatedClass = determineNumberClass(number);
+        if (calculatedClass !== classType) {
+          results.push({ success: false, message: `Number ${number} belongs to class ${calculatedClass}, not ${classType}` });
+          continue;
+        }
+      }
+      const minAmount = 10;
+      const maxAmount = 1000;
+      if (amount < minAmount || amount > maxAmount) {
+        results.push({ success: false, message: `Amount for ${number} must be between ${minAmount} and ${maxAmount}` });
+        continue;
+      }
+      // Check for duplicate selection
+      const existingSelection = await NumberSelection.findOne({ userId, roundId: currentRound.roundId, number, classType });
+      if (existingSelection) {
+        results.push({ success: false, message: `Already selected ${number} for this round` });
+        continue;
+      }
+      totalAmount += amount;
+      results.push({ success: true, classType, number, amount });
+    }
+
+    if (user.walletBalance < totalAmount) {
+      return res.status(400).json({ success: false, message: "Insufficient balance for all selections" });
+    }
+
+    let createdSelections = [];
+    for (let i = 0; i < selections.length; i++) {
+      if (!results[i].success) continue;
+      const { classType, number, amount } = selections[i];
+      const newSelection = new NumberSelection({ userId, roundId: currentRound.roundId, number, classType, amount, status: "pending" });
+      const balanceBefore = user.walletBalance;
+      user.walletBalance -= amount;
+      const transaction = new WalletTransaction({
+        userId,
+        type: "debit",
+        amount,
+        source: "game-play",
+        description: `Bet placed for number ${number} in round ${currentRound.roundId}`,
+        balanceBefore,
+        balanceAfter: user.walletBalance,
+        roundId: currentRound.roundId,
+        metadata: { classType, selectedNumber: number }
+      });
+      await newSelection.save();
+      await transaction.save();
+      createdSelections.push({ id: newSelection._id, number, classType, amount, roundId: currentRound.roundId, createdAt: newSelection.createdAt });
+    }
     await user.save();
-    await transaction.save();
-    
     res.status(201).json({
       success: true,
-      message: "Number selected successfully",
+      message: "Selections processed",
       data: {
-        selection: {
-          id: newSelection._id,
-          number,
-          classType,
-          amount,
-          roundId: currentRound.roundId,
-          createdAt: newSelection.createdAt
-        },
-        walletBalance: user.walletBalance
+        selections: createdSelections,
+        walletBalance: user.walletBalance,
+        results
       }
     });
-    
   } catch (error) {
     console.error("Error selecting number:", error);
-    res.status(500).json({
-      success: false,
-      message: "Error selecting number"
-    });
+    res.status(500).json({ success: false, message: "Error selecting number" });
   }
 };
 

@@ -22,7 +22,12 @@ class WalletService {
   }
 
   // Request Add Token
-  Future<bool> requestAddToken(int amount, String upiId, String userName, String paymentApp) async {
+  Future<bool> requestAddToken(
+    int amount,
+    String upiId,
+    String userName,
+    String paymentApp,
+  ) async {
     try {
       await _apiService.post(ApiConstants.addTokenEndpoint, {
         'amount': amount,
@@ -38,7 +43,11 @@ class WalletService {
   }
 
   // Request Withdraw
-  Future<bool> requestWithdraw(int amount, String phone, String paymentApp) async {
+  Future<bool> requestWithdraw(
+    int amount,
+    String phone,
+    String paymentApp,
+  ) async {
     try {
       await _apiService.post(ApiConstants.withdrawEndpoint, {
         'amount': amount,

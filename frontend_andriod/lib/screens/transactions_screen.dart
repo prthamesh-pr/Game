@@ -180,33 +180,46 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
     ).format(transaction.timestamp);
 
     return Card(
-      margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+      elevation: 3,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(18),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Expanded(
-                  child: Text(
-                    transaction.description,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
+                Row(
+                  children: [
+                    CircleAvatar(
+                      backgroundColor: isCredit ? AppColors.success.withOpacity(0.15) : AppColors.error.withOpacity(0.15),
+                      child: Icon(
+                        isCredit ? Icons.arrow_downward : Icons.arrow_upward,
+                        color: isCredit ? AppColors.success : AppColors.error,
+                        size: 22,
+                      ),
+                      radius: 18,
                     ),
-                  ),
+                    const SizedBox(width: 12),
+                    Text(
+                      isCredit ? 'Add Token' : 'Withdraw Token',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        color: isCredit ? AppColors.success : AppColors.error,
+                      ),
+                    ),
+                  ],
                 ),
                 Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
+                    horizontal: 10,
+                    vertical: 5,
                   ),
                   decoration: BoxDecoration(
-                    color: statusColor.withValues(alpha: 0.1),
+                    color: statusColor.withOpacity(0.08),
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(color: statusColor),
                   ),
@@ -221,7 +234,15 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
+            Text(
+              transaction.description,
+              style: const TextStyle(
+                fontSize: 15,
+                color: Colors.black87,
+              ),
+            ),
+            const SizedBox(height: 10),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -230,11 +251,10 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                   style: TextStyle(color: Colors.grey[600], fontSize: 14),
                 ),
                 Text(
-                  (isCredit ? '+' : '-') +
-                      Utils.formatCurrency(transaction.amount),
+                  (isCredit ? '+' : '-') + Utils.formatCurrency(transaction.amount),
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
-                    fontSize: 16,
+                    fontSize: 17,
                     color: isCredit ? AppColors.success : AppColors.error,
                   ),
                 ),

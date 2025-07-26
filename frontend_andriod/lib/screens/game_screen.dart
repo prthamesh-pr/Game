@@ -35,12 +35,19 @@ class _GameScreenState extends State<GameScreen> {
     try {
       final response = await _gameService.getValidNumbers(widget.gameClass);
       setState(() {
-        if (response['data'] != null && response['data']['validNumbers'] != null) {
-          List<String> nums = (response['data']['validNumbers'] as List).map((n) => n.toString()).toList();
+        if (response['data'] != null &&
+            response['data']['validNumbers'] != null) {
+          List<String> nums = (response['data']['validNumbers'] as List)
+              .map((n) => n.toString())
+              .toList();
           if (widget.gameClass == 'D') {
-            nums.sort((a, b) => int.parse(a).compareTo(int.parse(b))); // Ascending
+            nums.sort(
+              (a, b) => int.parse(a).compareTo(int.parse(b)),
+            ); // Ascending
           } else {
-            nums.sort((a, b) => int.parse(b).compareTo(int.parse(a))); // Descending
+            nums.sort(
+              (a, b) => int.parse(b).compareTo(int.parse(a)),
+            ); // Descending
           }
           _numbers = nums;
         } else {

@@ -11,6 +11,7 @@ class WithdrawDialog extends StatefulWidget {
 class _WithdrawDialogState extends State<WithdrawDialog> {
   final TextEditingController _amountController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
+  final TextEditingController _nameController = TextEditingController();
   String _selectedApp = 'GooglePay';
 
   @override
@@ -24,13 +25,21 @@ class _WithdrawDialogState extends State<WithdrawDialog> {
             TextField(
               controller: _amountController,
               keyboardType: TextInputType.number,
-              decoration: const InputDecoration(labelText: 'Enter Amount'),
+              decoration: const InputDecoration(
+                labelText: 'Enter Amount (Tokens)',
+                suffixText: 'Tokens',
+              ),
             ),
             const SizedBox(height: 8),
             TextField(
               controller: _phoneController,
               keyboardType: TextInputType.phone,
               decoration: const InputDecoration(labelText: 'Phone Number'),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: _nameController,
+              decoration: const InputDecoration(labelText: 'Name of User'),
             ),
             const SizedBox(height: 8),
             DropdownButtonFormField<String>(
@@ -40,8 +49,11 @@ class _WithdrawDialogState extends State<WithdrawDialog> {
                 DropdownMenuItem(value: 'PhonePe', child: Text('PhonePe')),
                 DropdownMenuItem(value: 'Paytm', child: Text('Paytm')),
               ],
-              onChanged: (val) => setState(() => _selectedApp = val ?? 'GooglePay'),
-              decoration: const InputDecoration(labelText: 'Select Payment App'),
+              onChanged: (val) =>
+                  setState(() => _selectedApp = val ?? 'GooglePay'),
+              decoration: const InputDecoration(
+                labelText: 'Select Payment App',
+              ),
             ),
           ],
         ),
@@ -55,7 +67,8 @@ class _WithdrawDialogState extends State<WithdrawDialog> {
           onPressed: () {
             final amount = int.tryParse(_amountController.text) ?? 0;
             final phone = _phoneController.text.trim();
-            if (amount > 0 && phone.isNotEmpty) {
+            final name = _nameController.text.trim();
+            if (amount > 0 && phone.isNotEmpty && name.isNotEmpty) {
               widget.onSubmit(amount, phone, _selectedApp);
               Navigator.pop(context);
             }

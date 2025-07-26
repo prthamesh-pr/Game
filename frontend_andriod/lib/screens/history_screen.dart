@@ -186,9 +186,32 @@ class HistoryScreen extends StatelessWidget {
               ],
             ),
             const Divider(height: 20),
-            Text(
-              formattedDate,
-              style: const TextStyle(color: AppColors.textLight, fontSize: 12),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Start: ' + (gamePlay.roundInfo?.startTime ?? '-'), style: const TextStyle(fontSize: 12, color: AppColors.textLight)),
+                    Text('End: ' + (gamePlay.roundInfo?.endTime ?? '-'), style: const TextStyle(fontSize: 12, color: AppColors.textLight)),
+                  ],
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: (gamePlay.roundInfo?.resultDeclared ?? false) ? Colors.green[100] : Colors.orange[100],
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    (gamePlay.roundInfo?.resultDeclared ?? false) ? 'Result Declared' : 'Pending',
+                    style: TextStyle(
+                      color: (gamePlay.roundInfo?.resultDeclared ?? false) ? Colors.green : Colors.orange,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ],
         ),

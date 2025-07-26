@@ -92,7 +92,7 @@ class _BetDialogState extends State<BetDialog> {
           border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
         ),
         child: Text(
-          '₹$amount',
+          '$amount Tokens',
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.bold,
@@ -158,7 +158,6 @@ class _BetDialogState extends State<BetDialog> {
               onChanged: (_) => _validateAmount(),
               decoration: InputDecoration(
                 labelText: 'Tokens to Bet',
-                prefixText: '₹',
                 suffixText: 'Tokens',
                 errorText: _errorText,
                 border: OutlineInputBorder(
@@ -185,7 +184,7 @@ class _BetDialogState extends State<BetDialog> {
               children: [
                 const Text('Token Balance:'),
                 Text(
-                  Utils.formatCurrency(widget.walletBalance),
+                  '${widget.walletBalance.toStringAsFixed(0)} Tokens',
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     color: AppColors.primary,

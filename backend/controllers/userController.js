@@ -133,6 +133,29 @@ const getUserSelections = async (req, res) => {
       .skip(skip)
       .populate('userId', 'username');
 
+    // Get round info for all selections
+    const roundIds = selections.map(s => s.roundId);
+    const rounds = await Result.find({ roundId: { $in: roundIds } });
+
+    // Attach round info to each selection
+    const selectionsWithRound = selections.map(sel => {
+      const round = rounds.find(r => r.roundId === sel.roundId);
+      return {
+        ...sel.toObject(),
+        roundInfo: round ? {
+          startTime: round.startTime,
+          endTime: round.endTime,
+          resultDeclared: round.status === 'completed',
+          winningNumbers: {
+            classA: round.classA?.winningNumber,
+            classB: round.classB?.winningNumber,
+            classC: round.classC?.winningNumber,
+            classD: round.classD?.winningNumber
+          }
+        } : null
+      };
+    });
+
     const totalSelections = await NumberSelection.countDocuments({ userId });
     const totalPages = Math.ceil(totalSelections / limit);
 
@@ -140,7 +163,7 @@ const getUserSelections = async (req, res) => {
       success: true,
       message: 'Selections retrieved successfully',
       data: {
-        selections,
+        selections: selectionsWithRound,
         pagination: {
           currentPage: page,
           totalPages,
@@ -236,13 +259,20 @@ const getUserResults = async (req, res) => {
         roundResult: correspondingResult ? {
           roundId: correspondingResult.roundId,
           winningNumbers: {
-            classA: correspondingResult.classA.winningNumber,
-            classB: correspondingResult.classB.winningNumber,
-            classC: correspondingResult.classC.winningNumber
+            classA: correspondingResult.classA?.winningNumber,
+            classB: correspondingResult.classB?.winningNumber,
+            classC: correspondingResult.classC?.winningNumber,
+            classD: correspondingResult.classD?.winningNumber
           },
           startTime: correspondingResult.startTime,
-          endTime: correspondingResult.endTime
-        } : null
+          endTime: correspondingResult.endTime,
+          resultDeclared: correspondingResult.status === 'completed'
+        } : null,
+        status: selection.status,
+        amount: selection.amount,
+        number: selection.number,
+        classType: selection.classType,
+        resultProcessedAt: selection.resultProcessedAt
       };
     });
 

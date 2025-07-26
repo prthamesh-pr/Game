@@ -169,10 +169,10 @@ const loginUser = async (req, res) => {
  */
 const loginAdmin = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { identifier, password } = req.body;
 
-    // Find admin by credentials
-    const admin = await Admin.findByCredentials(email, password);
+    // Find admin by credentials (username or email)
+    const admin = await Admin.findByCredentials(identifier, password);
 
     // Generate JWT token
     const token = generateToken(admin._id, 'admin');

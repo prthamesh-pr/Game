@@ -245,7 +245,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"gameClass\": \"A\",\n  \"number\": \"123\",\n  \"amount\": 100\n}"
+              "raw": "{\n  \"selections\": [\n    { \"classType\": \"A\", \"number\": \"123\", \"amount\": 100 },\n    { \"classType\": \"B\", \"number\": \"456\", \"amount\": 50 }\n  ]\n}"
             },
             "url": {
               "raw": "{{base_url}}/api/game/select",

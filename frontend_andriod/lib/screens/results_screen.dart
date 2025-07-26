@@ -65,17 +65,8 @@ class _ResultsScreenState extends State<ResultsScreen>
   }
 
   Color _getTabColor(int index) {
-    switch (index) {
-      case 0:
-        return AppColors
-            .gradientStart; // Changed from classA to a different color
-      case 1:
-        return AppColors.classB;
-      case 2:
-        return AppColors.classC;
-      default:
-        return AppColors.primary;
-    }
+    // Unified color for all tabs (Class A, B, C)
+    return AppColors.primary;
   }
 
   @override

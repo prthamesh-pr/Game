@@ -1,3 +1,54 @@
+// Get all withdrawal requests
+exports.getAllWithdrawals = async (req, res) => {
+  try {
+    const requests = await WithdrawalRequest.find().populate('userId', 'username walletBalance');
+    res.json({ success: true, data: requests });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Error fetching withdrawal requests' });
+  }
+};
+
+// Approve withdrawal request
+exports.approveWithdrawal = async (req, res) => {
+  try {
+    const requestId = req.params.id;
+    const adminId = req.user.id;
+    const request = await WithdrawalRequest.findById(requestId);
+    if (!request || request.status !== 'pending') {
+      return res.status(404).json({ success: false, message: 'Request not found or already processed' });
+    }
+    request.status = 'approved';
+    request.adminId = adminId;
+    request.processedAt = new Date();
+    await request.save();
+    res.json({ success: true, message: 'Withdrawal approved', data: request });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Error approving withdrawal request' });
+  }
+};
+
+// Reject withdrawal request
+exports.rejectWithdrawal = async (req, res) => {
+  try {
+    const requestId = req.params.id;
+    const adminId = req.user.id;
+    const request = await WithdrawalRequest.findById(requestId);
+    if (!request || request.status !== 'pending') {
+      return res.status(404).json({ success: false, message: 'Request not found or already processed' });
+    }
+    request.status = 'rejected';
+    request.adminId = adminId;
+    request.processedAt = new Date();
+    await request.save();
+    // Refund user
+    const user = await User.findById(request.userId);
+    user.walletBalance += request.amount;
+    await user.save();
+    res.json({ success: true, message: 'Withdrawal rejected', data: request });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Error rejecting withdrawal request' });
+  }
+};
 exports.filterWithdrawals = (req, res) => {
   // TODO: Filter withdrawal requests by user, status, date range
   const { userId, status, startDate, endDate } = req.query;

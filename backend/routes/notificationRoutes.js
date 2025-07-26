@@ -1,8 +1,9 @@
-// Mark notification as read
-router.post('/:id/read', require('../controllers/notificationController').markAsRead);
+
 const express = require('express');
 const router = express.Router();
 const notificationController = require('../controllers/notificationController');
+// Mark notification as read
+router.post('/:id/read', notificationController.markAsRead);
 
 // GET all notifications
 router.get('/', notificationController.getAllNotifications);

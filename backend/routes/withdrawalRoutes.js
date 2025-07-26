@@ -1,14 +1,13 @@
-// Filter withdrawal requests by user, status, date range
-router.get('/filter', withdrawalController.filterWithdrawals);
+
+const express = require('express');
+const router = express.Router();
+const withdrawalController = require('../controllers/withdrawalController');
 // Filter withdrawal requests by user, status, date range
 router.get('/filter', withdrawalController.filterWithdrawals);
 // Export withdrawal requests (CSV/Excel)
 router.get('/export', withdrawalController.exportWithdrawals);
 // GET withdrawal transaction details
 router.get('/:id/transaction', withdrawalController.getWithdrawalTransactionDetails);
-const express = require('express');
-const router = express.Router();
-const withdrawalController = require('../controllers/withdrawalController');
 
 // GET all withdrawal requests
 router.get('/', withdrawalController.getAllWithdrawals);

@@ -1,3 +1,46 @@
+// Upload QR image
+exports.uploadQRImage = async (req, res) => {
+  try {
+    const { imageData } = req.body;
+    const adminId = req.user.id;
+    let qr = await QRCode.findOne();
+    if (qr) {
+      qr.imageData = imageData;
+      qr.uploadedBy = adminId;
+      qr.updatedAt = new Date();
+      await qr.save();
+    } else {
+      qr = new QRCode({ imageData, uploadedBy: adminId });
+      await qr.save();
+    }
+    res.json({ success: true, message: 'QR image uploaded', data: qr });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Error uploading QR image' });
+  }
+};
+// Get all QR codes
+exports.getAllQRCodes = async (req, res) => {
+  try {
+    const qrcodes = await QRCode.find();
+    res.json({ success: true, data: qrcodes });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Error fetching QR codes' });
+  }
+};
+
+// Generate QR code
+exports.generateQRCode = async (req, res) => {
+  try {
+    // Example: generate a new QR code (actual implementation may vary)
+    const { data } = req.body;
+    // You may use a QR code library here to generate imageData
+    const qr = new QRCode({ imageData: data, uploadedBy: req.user.id });
+    await qr.save();
+    res.json({ success: true, message: 'QR code generated', data: qr });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Error generating QR code' });
+  }
+};
 // Assign QR code to user/admin
 exports.assignQRCode = async (req, res) => {
   try {

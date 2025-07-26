@@ -1,14 +1,13 @@
-// POST assign QR code to user/admin
-router.post('/assign', qrController.assignQRCode);
 
-// POST deactivate QR code
-router.post('/deactivate', qrController.deactivateQRCode);
-
-// GET download QR image
-router.get('/download/:qrId', qrController.downloadQRCode);
 const express = require('express');
 const router = express.Router();
 const qrController = require('../controllers/qrController');
+// POST assign QR code to user/admin
+router.post('/assign', qrController.assignQRCode);
+// POST deactivate QR code
+router.post('/deactivate', qrController.deactivateQRCode);
+// GET download QR image
+router.get('/download/:qrId', qrController.downloadQRCode);
 
 // GET all QR codes
 router.get('/', qrController.getAllQRCodes);

@@ -1,7 +1,31 @@
+exports.filterWithdrawals = (req, res) => {
+  // TODO: Filter withdrawal requests by user, status, date range
+  const { userId, status, startDate, endDate } = req.query;
+  res.json({ message: 'Filter withdrawal requests', filters: { userId, status, startDate, endDate } });
+};
+exports.exportWithdrawals = (req, res) => {
+  // TODO: Export withdrawal requests as CSV/Excel
+  res.json({ message: 'Export withdrawal requests (CSV/Excel)' });
+};
+exports.getWithdrawalTransactionDetails = (req, res) => {
+  // TODO: Fetch transaction details for a withdrawal request
+  res.json({ message: 'Get withdrawal transaction details', id: req.params.id });
+};
+exports.getPendingWithdrawals = (req, res) => {
+  // TODO: Fetch all pending withdrawal requests
+  res.json({ message: 'Get all pending withdrawal requests' });
+};
+
+exports.processWithdrawal = (req, res) => {
+  // TODO: Approve or reject withdrawal request with reason
+  const { id, action, reason } = req.body;
+  res.json({ message: `Withdrawal ${action}`, id, reason });
+};
 const WithdrawalRequest = require('../models/WithdrawalRequest');
 const User = require('../models/User');
 
 // User creates withdrawal request
+
 exports.createWithdrawal = async (req, res) => {
   try {
     const { amount, phoneNumber, paymentApp, upiId, userName } = req.body;
@@ -25,6 +49,11 @@ exports.createWithdrawal = async (req, res) => {
   } catch (err) {
     res.status(500).json({ success: false, message: 'Error creating withdrawal request' });
   }
+};
+
+exports.getWithdrawalById = (req, res) => {
+  // TODO: Fetch a single withdrawal request by ID
+  res.json({ message: 'Get withdrawal request by ID', id: req.params.id });
 };
 
 // Admin views all pending withdrawal requests

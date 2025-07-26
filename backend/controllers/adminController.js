@@ -6,124 +6,6 @@ const WalletTransaction = require('../models/WalletTransaction');
 const { determineNumberClass, calculateWinningAmount } = require('../utils/numberUtils');
 
 /**
- * Get All Users
- */
-const getAllUsers = async (req, res) => {
-  try {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 20;
-    const search = req.query.search || '';
-    const skip = (page - 1) * limit;
-
-    // Build search query
-    const searchQuery = search ? {
-      $or: [
-        { username: { $regex: search, $options: 'i' } },
-        { mobileNumber: { $regex: search, $options: 'i' } }
-      ]
-    } : {};
-
-    const users = await User.find(searchQuery)
-      .select('-passwordHash')
-      .sort({ createdAt: -1 })
-      .limit(limit)
-      .skip(skip);
-
-    const totalUsers = await User.countDocuments(searchQuery);
-    const totalPages = Math.ceil(totalUsers / limit);
-
-    res.json({
-      success: true,
-      message: 'Users retrieved successfully',
-      data: {
-        users,
-        pagination: {
-          currentPage: page,
-          totalPages,
-          totalUsers,
-          hasNextPage: page < totalPages,
-          hasPrevPage: page > 1
-        }
-      }
-    });
-
-  } catch (error) {
-    console.error('Get all users error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Internal server error'
-    });
-  }
-};
-
-/**
- * Get Single User Details
- */
-const getUserDetails = async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    const user = await User.findById(id).select('-passwordHash');
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: 'User not found'
-      });
-    }
-
-    // Get user's recent transactions
-    const recentTransactions = await WalletTransaction.find({ userId: id })
-      .sort({ createdAt: -1 })
-      .limit(10)
-      .populate('adminId', 'fullName email');
-
-    // Get user's recent number selections
-    const recentSelections = await NumberSelection.find({ userId: id })
-      .sort({ placedAt: -1 })
-      .limit(10);
-
-    // Get user statistics
-    const stats = await NumberSelection.aggregate([
-      { $match: { userId: user._id } },
-      {
-        $group: {
-          _id: null,
-          totalBets: { $sum: 1 },
-          totalWinnings: { $sum: '$winningAmount' },
-          totalAmountBet: { $sum: '$amount' },
-          wins: { $sum: { $cond: [{ $eq: ['$status', 'win'] }, 1, 0] } },
-          losses: { $sum: { $cond: [{ $eq: ['$status', 'loss'] }, 1, 0] } }
-        }
-      }
-    ]);
-
-    res.json({
-      success: true,
-      message: 'User details retrieved successfully',
-      data: {
-        user,
-        statistics: stats[0] || {
-          totalBets: 0,
-          totalWinnings: 0,
-          totalAmountBet: 0,
-          wins: 0,
-          losses: 0
-        },
-        recentTransactions,
-        recentSelections
-      }
-    });
-
-  } catch (error) {
-    console.error('Get user details error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Internal server error'
-    });
-  }
-};
-
-/**
  * Add/Deduct Money to/from User Wallet
  */
 const manageUserWallet = async (req, res) => {
@@ -159,7 +41,7 @@ const manageUserWallet = async (req, res) => {
     await user.save();
 
     // Create wallet transaction record
-    await WalletTransaction.createTransaction({
+    const transaction = await WalletTransaction.createTransaction({
       userId,
       type,
       amount,
@@ -169,6 +51,10 @@ const manageUserWallet = async (req, res) => {
       balanceAfter: user.wallet,
       adminId
     });
+
+    // Audit log
+    const { logAction } = require('./auditLogController');
+    await logAction(adminId, 'manage_wallet', { userId, amount, type, description });
 
     res.json({
       success: true,
@@ -298,14 +184,15 @@ const setGameResult = async (req, res) => {
             }
           });
 
-          // Add to result winners
-          result.winners.push({
-            userId: user._id,
-            classType,
-            number: selection.number,
-            betAmount: selection.amount,
-            winningAmount
-          });
+    // Audit log
+    const { logAction } = require('./auditLogController');
+    await logAction(adminId, 'manage_wallet', { userId, amount, type, description });
+
+    res.json({
+      success: true,
+      message: 'Wallet updated successfully',
+      data: { user, transaction }
+    });
 
           classStats.winnersCount += 1;
           classStats.totalWinnings += winningAmount;
@@ -493,6 +380,9 @@ const getDashboardStats = async (req, res) => {
       .sort({ placedAt: -1 })
       .limit(10)
       .populate('userId', 'username mobileNumber');
+    // Audit log
+    const { logAction } = require('./auditLogController');
+    await logAction(adminId, 'set_game_result', { roundId, winningNumbers });
 
     const recentResults = await Result.find({ status: 'completed' })
       .sort({ endTime: -1 })

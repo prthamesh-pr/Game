@@ -1,3 +1,53 @@
+// Assign QR code to user/admin
+exports.assignQRCode = async (req, res) => {
+  try {
+    const { qrId, userId, adminId } = req.body;
+    const qr = await QRCode.findById(qrId);
+    if (!qr) return res.status(404).json({ success: false, message: 'QR code not found' });
+    if (userId) qr.assignedToUser = userId;
+    if (adminId) qr.assignedToAdmin = adminId;
+    qr.updatedAt = new Date();
+    await qr.save();
+    res.json({ success: true, message: 'QR code assigned', data: qr });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Error assigning QR code' });
+  }
+};
+
+// Deactivate QR code
+exports.deactivateQRCode = async (req, res) => {
+  try {
+    const { qrId } = req.body;
+    const qr = await QRCode.findById(qrId);
+    if (!qr) return res.status(404).json({ success: false, message: 'QR code not found' });
+    qr.status = 'inactive';
+    qr.updatedAt = new Date();
+    await qr.save();
+    res.json({ success: true, message: 'QR code deactivated', data: qr });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Error deactivating QR code' });
+  }
+};
+
+// Download QR image
+exports.downloadQRCode = async (req, res) => {
+  try {
+    const { qrId } = req.params;
+    const qr = await QRCode.findById(qrId);
+    if (!qr || !qr.imageData) return res.status(404).json({ success: false, message: 'QR code image not found' });
+    // Assuming imageData is a base64 string with mime type prefix
+    const matches = qr.imageData.match(/^data:(.+);base64,(.+)$/);
+    if (!matches) return res.status(400).json({ success: false, message: 'Invalid image data' });
+    const mimeType = matches[1];
+    const base64Data = matches[2];
+    const imgBuffer = Buffer.from(base64Data, 'base64');
+    res.setHeader('Content-Type', mimeType);
+    res.setHeader('Content-Disposition', 'attachment; filename="qr_code.' + mimeType.split('/')[1] + '"');
+    res.send(imgBuffer);
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Error downloading QR code image' });
+  }
+};
 const QRCode = require('../models/QRCode');
 const Admin = require('../models/Admin');
 

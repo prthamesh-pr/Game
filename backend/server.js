@@ -13,12 +13,47 @@ const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const gameRoutes = require('./routes/gameRoutes');
+const resultRoutes = require('./routes/resultRoutes');
+const withdrawalRoutes = require('./routes/withdrawalRoutes');
+const transactionRoutes = require('./routes/transactionRoutes');
+const qrRoutes = require('./routes/qrRoutes');
+const settingsRoutes = require('./routes/settingsRoutes');
+const notificationRoutes = require('./routes/notificationRoutes');
+const auditLogRoutes = require('./routes/auditLogRoutes');
 
 // Import models for seeding
 const Admin = require('./models/Admin');
 const bcrypt = require('bcryptjs');
 
 const app = express();
+
+// Socket.IO setup for real-time notifications
+const http = require('http').createServer(app);
+const { Server } = require('socket.io');
+const io = new Server(http, {
+  cors: {
+    origin: '*',
+    methods: ['GET', 'POST']
+  }
+});
+
+// Store connected clients
+let connectedAdmins = {};
+io.on('connection', (socket) => {
+  // Identify admin by token or ID if needed
+  socket.on('registerAdmin', (adminId) => {
+    connectedAdmins[adminId] = socket.id;
+  });
+  socket.on('disconnect', () => {
+    for (const [adminId, id] of Object.entries(connectedAdmins)) {
+      if (id === socket.id) delete connectedAdmins[adminId];
+    }
+  });
+});
+
+// Pass Socket.IO instance to notificationController
+const notificationController = require('./controllers/notificationController');
+notificationController.setSocketIO(io);
 
 // Trust proxy for environments like Render, Heroku, etc.
 // This fixes the express-rate-limit X-Forwarded-For warning
@@ -165,6 +200,25 @@ app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/game', gameRoutes);
+app.use('/api/results', resultRoutes);
+app.use('/api/withdrawals', withdrawalRoutes);
+app.use('/api/transactions', transactionRoutes);
+app.use('/api/qrcodes', qrRoutes);
+app.use('/api/settings', settingsRoutes);
+app.use('/api/notifications', notificationRoutes);
+app.use('/api/auditlogs', auditLogRoutes);
+
+// New API routes for additional features
+app.use('/api/admin', adminRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/games', gameRoutes);
+app.use('/api/results', resultRoutes);
+app.use('/api/withdrawals', withdrawalRoutes);
+app.use('/api/transactions', transactionRoutes);
+app.use('/api/qrcodes', qrRoutes);
+app.use('/api/settings', settingsRoutes);
+app.use('/api/notifications', notificationRoutes);
+app.use('/api/auditlogs', auditLogRoutes);
 
 // Health check routes (both /health and /api/health)
 app.get('/health', (req, res) => {

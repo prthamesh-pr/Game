@@ -3,8 +3,6 @@ const { authMiddleware } = require('../middleware/authMiddleware');
 const { adminMiddleware, requirePermission } = require('../middleware/adminMiddleware');
 const { validationRules, handleValidationErrors, rateLimiters } = require('../middleware/validation');
 const {
-  getAllUsers,
-  getUserDetails,
   manageUserWallet,
   setGameResult,
   getAllResults,
@@ -38,7 +36,7 @@ router.get('/users', [
   requirePermission('canManageUsers'),
   validationRules.pagination,
   handleValidationErrors
-], getAllUsers);
+]);
 
 /**
  * @route   GET /api/admin/users/:id
@@ -49,7 +47,7 @@ router.get('/users/:id', [
   requirePermission('canManageUsers'),
   validationRules.mongoId,
   handleValidationErrors
-], getUserDetails);
+]);
 
 /**
  * @route   POST /api/admin/users/:id/toggle-status

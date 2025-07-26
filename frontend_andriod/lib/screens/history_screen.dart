@@ -134,10 +134,7 @@ class HistoryScreen extends StatelessWidget {
             const SizedBox(height: 6),
             Text(
               formattedDate,
-              style: const TextStyle(
-                fontSize: 13,
-                color: AppColors.textLight,
-              ),
+              style: const TextStyle(fontSize: 13, color: AppColors.textLight),
             ),
             const SizedBox(height: 10),
             Row(
@@ -200,20 +197,41 @@ class HistoryScreen extends StatelessWidget {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Start: ' + (gamePlay.roundInfo?.startTime ?? '-'), style: const TextStyle(fontSize: 12, color: AppColors.textLight)),
-                    Text('End: ' + (gamePlay.roundInfo?.endTime ?? '-'), style: const TextStyle(fontSize: 12, color: AppColors.textLight)),
+                    Text(
+                      'Start: ' + (gamePlay.roundInfo?.startTime ?? '-'),
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppColors.textLight,
+                      ),
+                    ),
+                    Text(
+                      'End: ' + (gamePlay.roundInfo?.endTime ?? '-'),
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppColors.textLight,
+                      ),
+                    ),
                   ],
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
-                    color: (gamePlay.roundInfo?.resultDeclared ?? false) ? Colors.green[100] : Colors.orange[100],
+                    color: (gamePlay.roundInfo?.resultDeclared ?? false)
+                        ? Colors.green[100]
+                        : Colors.orange[100],
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
-                    (gamePlay.roundInfo?.resultDeclared ?? false) ? 'Result Declared' : 'Pending',
+                    (gamePlay.roundInfo?.resultDeclared ?? false)
+                        ? 'Result Declared'
+                        : 'Pending',
                     style: TextStyle(
-                      color: (gamePlay.roundInfo?.resultDeclared ?? false) ? Colors.green : Colors.orange,
+                      color: (gamePlay.roundInfo?.resultDeclared ?? false)
+                          ? Colors.green
+                          : Colors.orange,
                       fontWeight: FontWeight.bold,
                       fontSize: 12,
                     ),

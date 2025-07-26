@@ -70,13 +70,12 @@ const updateUserProfile = async (req, res) => {
       }
     }
     
-    // Check if email is already taken by another user
-    if (email) {
+    // Check if email is already taken by another user (only if provided)
+    if (email && email.trim() !== '') {
       const existingUser = await User.findOne({
         email: email,
         _id: { $ne: userId }
       });
-
       if (existingUser) {
         return res.status(400).json({
           success: false,
@@ -87,7 +86,7 @@ const updateUserProfile = async (req, res) => {
 
     const updateData = {};
     if (username) updateData.username = username;
-    if (email) updateData.email = email;
+    if (email && email.trim() !== '') updateData.email = email;
 
     const updatedUser = await User.findByIdAndUpdate(
       userId,

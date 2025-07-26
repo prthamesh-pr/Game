@@ -64,7 +64,9 @@ class GamePlay {
       playedAt: DateTime.parse(json['playedAt']),
       isWinner: json['isWinner'] as bool,
       resultNumber: json['resultNumber'] as String?,
-      roundInfo: json['roundInfo'] != null ? RoundInfo.fromJson(json['roundInfo']) : null,
+      roundInfo: json['roundInfo'] != null
+          ? RoundInfo.fromJson(json['roundInfo'])
+          : null,
     );
   }
 
@@ -76,4 +78,3 @@ class GamePlay {
     return DateFormat('hh:mm a').format(playedAt);
   }
 }
-

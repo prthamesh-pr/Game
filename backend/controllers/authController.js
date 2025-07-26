@@ -10,29 +10,30 @@ const registerUser = async (req, res) => {
   try {
     const { username, mobileNumber, email, password } = req.body;
 
-    // Check if user already exists
+    // Check if user already exists (username and mobile are required, email is optional)
     const queryConditions = [
-      { username: username },
-      { email: email }
+      { username: username }
     ];
-    
-    // Only check mobile number if provided
     if (mobileNumber && mobileNumber.trim() !== '') {
       queryConditions.push({ mobileNumber: mobileNumber });
     }
-    
+    // Only check email if provided
+    if (email && email.trim() !== '') {
+      queryConditions.push({ email: email });
+    }
     const existingUser = await User.findOne({
       $or: queryConditions
     });
 
     if (existingUser) {
+      let message = '';
+      if (existingUser.username === username) message = 'Username already exists';
+      else if (email && email.trim() !== '' && existingUser.email === email) message = 'Email already registered';
+      else if (mobileNumber && mobileNumber.trim() !== '' && existingUser.mobileNumber === mobileNumber) message = 'Mobile number already registered';
+      else message = 'User already exists';
       return res.status(400).json({
         success: false,
-        message: existingUser.username === username 
-          ? 'Username already exists' 
-          : existingUser.email === email
-          ? 'Email already registered'
-          : 'Mobile number already registered'
+        message
       });
     }
 
@@ -65,17 +66,16 @@ const registerUser = async (req, res) => {
     // Create new user
     const userData = {
       username,
-      email,
       passwordHash: password // Will be hashed by pre-save middleware
     };
-    
+    if (email && email.trim() !== '') {
+      userData.email = email;
+    }
     // Only add mobileNumber if it's provided and valid
     if (mobileNumber && mobileNumber.trim() !== '') {
       userData.mobileNumber = mobileNumber;
     }
-    
     const user = new User(userData);
-
     await user.save();
 
     // Generate JWT token

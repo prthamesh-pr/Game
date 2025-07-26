@@ -1,0 +1,61 @@
+{
+  "info": {
+    "name": "Game 999 API Collection (Latest)",
+    "description": "Latest API testing collection for Game 999 backend, updated for optional email and all recent fixes.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "https://game-39rz.onrender.com", "type": "string" },
+    { "key": "user_token", "value": "", "type": "string" },
+    { "key": "admin_token", "value": "", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "Authentication APIs",
+      "item": [
+        {
+          "name": "User Registration",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": { "mode": "raw", "raw": "{\n  \"username\": \"testuser123\",\n  \"password\": \"Test123!\",\n  \"mobileNumber\": \"9876543210\"\n}" },
+            "url": { "raw": "{{base_url}}/api/auth/register", "host": ["{{base_url}}"], "path": ["api", "auth", "register"] }
+          },
+          "response": []
+        },
+        {
+          "name": "User Registration (With Email)",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": { "mode": "raw", "raw": "{\n  \"username\": \"testuser456\",\n  \"email\": \"test2@example.com\",\n  \"password\": \"Test123!\",\n  \"mobileNumber\": \"9876543210\"\n}" },
+            "url": { "raw": "{{base_url}}/api/auth/register", "host": ["{{base_url}}"], "path": ["api", "auth", "register"] }
+          },
+          "response": []
+        },
+        {
+          "name": "User Login",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": { "mode": "raw", "raw": "{\n  \"identifier\": \"testuser123\",\n  \"password\": \"Test123!\"\n}" },
+            "url": { "raw": "{{base_url}}/api/auth/login", "host": ["{{base_url}}"], "path": ["api", "auth", "login"] }
+          },
+          "response": []
+        },
+        {
+          "name": "Admin Login",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": { "mode": "raw", "raw": "{\n  \"identifier\": \"admin\",\n  \"password\": \"admin123\"\n}" },
+            "url": { "raw": "{{base_url}}/api/auth/admin/login", "host": ["{{base_url}}"], "path": ["api", "auth", "admin", "login"] }
+          },
+          "response": []
+        }
+      ]
+    }
+    
+    
+  ]
+}

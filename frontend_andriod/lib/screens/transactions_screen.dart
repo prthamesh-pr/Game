@@ -194,7 +194,9 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                 Row(
                   children: [
                     CircleAvatar(
-                      backgroundColor: isCredit ? AppColors.success.withOpacity(0.15) : AppColors.error.withOpacity(0.15),
+                      backgroundColor: isCredit
+                          ? AppColors.success.withOpacity(0.15)
+                          : AppColors.error.withOpacity(0.15),
                       child: Icon(
                         isCredit ? Icons.arrow_downward : Icons.arrow_upward,
                         color: isCredit ? AppColors.success : AppColors.error,
@@ -237,10 +239,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
             const SizedBox(height: 10),
             Text(
               transaction.description,
-              style: const TextStyle(
-                fontSize: 15,
-                color: Colors.black87,
-              ),
+              style: const TextStyle(fontSize: 15, color: Colors.black87),
             ),
             const SizedBox(height: 10),
             Row(
@@ -251,7 +250,8 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                   style: TextStyle(color: Colors.grey[600], fontSize: 14),
                 ),
                 Text(
-                  (isCredit ? '+' : '-') + Utils.formatCurrency(transaction.amount),
+                  (isCredit ? '+' : '-') +
+                      Utils.formatCurrency(transaction.amount),
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 17,

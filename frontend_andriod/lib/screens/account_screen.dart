@@ -1,3 +1,6 @@
+import '../widgets/add_token_dialog.dart';
+import '../services/wallet_service.dart';
+import '../widgets/withdraw_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -158,7 +161,7 @@ class _AccountScreenState extends State<AccountScreen> {
                         ),
                         const SizedBox(height: 16),
                         Text(
-                          Utils.formatCurrency(user?.walletBalance ?? 0),
+                          '${user?.walletBalance.toStringAsFixed(0) ?? '0'} Tokens',
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 28,
@@ -166,7 +169,58 @@ class _AccountScreenState extends State<AccountScreen> {
                           ),
                         ),
                         const SizedBox(height: 16),
-                        // View Transactions Button
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            ElevatedButton.icon(
+                              icon: const Icon(Icons.add_circle_outline),
+                              label: const Text('Add Token'),
+                              style: ElevatedButton.styleFrom(
+                                foregroundColor: Colors.white,
+                                backgroundColor: AppColors.success,
+                              ),
+                              onPressed: () async {
+                                final walletService = WalletService();
+                                final qrUrl = await walletService.fetchQrCodeUrl();
+                                showDialog(
+                                  context: context,
+                                  builder: (context) => AddTokenDialog(
+                                    qrImageUrl: qrUrl,
+                                    onSubmit: (amount, upiId, userName, paymentApp) async {
+                                      final success = await walletService.requestAddToken(amount, upiId, userName, paymentApp);
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(content: Text(success ? 'Token add request sent!' : 'Failed to send request'), backgroundColor: success ? Colors.green : Colors.red),
+                                      );
+                                    },
+                                  ),
+                                );
+                              },
+                            ),
+                            ElevatedButton.icon(
+                              icon: const Icon(Icons.remove_circle_outline),
+                              label: const Text('Withdraw'),
+                              style: ElevatedButton.styleFrom(
+                                foregroundColor: Colors.white,
+                                backgroundColor: AppColors.warning,
+                              ),
+                              onPressed: () {
+                                final walletService = WalletService();
+                                showDialog(
+                                  context: context,
+                                  builder: (context) => WithdrawDialog(
+                                    onSubmit: (amount, phone, paymentApp) async {
+                                      final success = await walletService.requestWithdraw(amount, phone, paymentApp);
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(content: Text(success ? 'Withdrawal request sent!' : 'Failed to send request'), backgroundColor: success ? Colors.green : Colors.red),
+                                      );
+                                    },
+                                  ),
+                                );
+                              },
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
                         ElevatedButton.icon(
                           icon: const Icon(Icons.history),
                           label: const Text('View Transaction History'),

@@ -9,12 +9,23 @@ const numberSelectionSchema = new mongoose.Schema({
   classType: {
     type: String,
     required: true,
-    enum: ['A', 'B', 'C']
+    enum: ['A', 'B', 'C', 'D']
   },
   number: {
     type: String,
     required: true,
-    match: [/^\d{3}$/, 'Number must be exactly 3 digits']
+    validate: {
+      validator: function (v) {
+        if (this.classType === 'D') {
+          return /^[1-9]$/.test(v);
+        } else {
+          return /^\d{3}$/.test(v);
+        }
+      },
+      message: function (props) {
+        return props.value + (this.classType === 'D' ? ' must be a single digit (1-9)' : ' must be exactly 3 digits');
+      }
+    }
   },
   amount: {
     type: Number,

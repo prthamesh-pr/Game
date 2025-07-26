@@ -10,7 +10,6 @@ import '../widgets/custom_appbar.dart';
 import '../widgets/app_drawer.dart';
 import '../widgets/loading_shimmer.dart';
 import '../screens/game_screen.dart';
-import '../widgets/live_stats_widget.dart';
 import '../screens/results_screen.dart';
 import '../models/game_result_model.dart';
 
@@ -109,7 +108,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
           children: [
             _buildWelcomeSection(context, authProvider),
             const SizedBox(height: 20),
-            const LiveStatsWidget(),
             const SizedBox(height: 20),
             _buildGameClassesSection(context),
             const SizedBox(height: 20),
@@ -270,6 +268,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
               'C',
               'All Different Digits (123, 456, 789, ...)',
               AppColors.classC,
+              context,
+            ),
+            const SizedBox(height: 12),
+            _buildGameClassCard(
+              'D',
+              'Single Digit (1-9)',
+              AppColors.primary,
               context,
             ),
           ],
@@ -514,6 +519,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
         return AppColors.classB;
       case 'C':
         return AppColors.classC;
+      case 'D':
+        return AppColors.primary;
       default:
         return Colors.blue;
     }

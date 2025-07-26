@@ -64,11 +64,8 @@ const determineNumberClass = (number) => {
 const generateValidNumbers = (classType) => {
   switch (classType) {
     case 'A':
-      // Class A: repeating digits
       return ['111', '222', '333', '444', '555', '666', '777', '888', '999'];
-    
     case 'B':
-      // Class B: exactly 2 same digits
       return [
         '112', '113', '114', '115', '116', '117', '118', '119',
         '223', '224', '225', '226', '227', '228', '229',
@@ -79,9 +76,7 @@ const generateValidNumbers = (classType) => {
         '778', '779',
         '889'
       ];
-    
     case 'C':
-      // Class C: all different digits
       return [
         '123', '124', '125', '126', '127', '128', '129',
         '134', '135', '136', '137', '138', '139',
@@ -106,7 +101,9 @@ const generateValidNumbers = (classType) => {
         '678', '679', '689',
         '789'
       ];
-    
+    case 'D':
+      // Class D: single digits 1-9
+      return ['1','2','3','4','5','6','7','8','9'];
     default:
       return [];
   }
@@ -120,11 +117,11 @@ const generateValidNumbers = (classType) => {
  */
 const calculateWinningAmount = (classType, betAmount) => {
   const multipliers = {
-    'A': 100,  // Class A has lowest probability, highest reward
-    'B': 10,   // Class B has medium probability, medium reward
-    'C': 5     // Class C has highest probability, lowest reward
+    'A': 100,
+    'B': 10,
+    'C': 5,
+    'D': 5 // Same as Class C
   };
-  
   return betAmount * (multipliers[classType] || 1);
 };
 

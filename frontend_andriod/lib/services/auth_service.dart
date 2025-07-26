@@ -53,23 +53,28 @@ class AuthService {
   }
 
   // Register user
-  Future<User> register(String username, String email, String password, [String? mobileNumber]) async {
+  Future<User> register(
+    String username,
+    String email,
+    String password, [
+    String? mobileNumber,
+  ]) async {
     try {
       final Map<String, dynamic> requestData = {
         'username': username,
         'email': email,
         'password': password,
       };
-      
+
       // Add mobile number if provided
       if (mobileNumber != null && mobileNumber.isNotEmpty) {
         requestData['mobileNumber'] = mobileNumber;
       }
-      
+
       final response = await _apiService.post(
-        ApiConstants.registerEndpoint, 
-        requestData, 
-        requireAuth: false
+        ApiConstants.registerEndpoint,
+        requestData,
+        requireAuth: false,
       );
 
       // Save auth tokens

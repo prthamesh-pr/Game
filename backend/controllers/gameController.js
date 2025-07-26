@@ -18,18 +18,27 @@ const selectNumber = async (req, res) => {
     const userId = req.user.id;
 
     // Validate inputs
-    if (!["A", "B", "C"].includes(classType)) {
+    if (!["A", "B", "C", "D"].includes(classType)) {
       return res.status(400).json({
         success: false,
-        message: "Invalid class type. Must be A, B, or C"
+        message: "Invalid class type. Must be A, B, C, or D"
       });
     }
 
-    if (!isValid3DigitNumber(number)) {
-      return res.status(400).json({
-        success: false,
-        message: "Number must be a valid 3-digit number"
-      });
+    if (classType === 'D') {
+      if (!/^[1-9]$/.test(number)) {
+        return res.status(400).json({
+          success: false,
+          message: "Number must be a single digit (1-9) for Class D"
+        });
+      }
+    } else {
+      if (!isValid3DigitNumber(number)) {
+        return res.status(400).json({
+          success: false,
+          message: "Number must be a valid 3-digit number"
+        });
+      }
     }
 
     const minAmount = 10;  // Minimum bet amount
@@ -43,21 +52,40 @@ const selectNumber = async (req, res) => {
     }
     
     // Check if number is valid for the selected class
-    const calculatedClass = determineNumberClass(number);
-    if (calculatedClass !== classType) {
-      return res.status(400).json({
-        success: false,
-        message: `Number ${number} belongs to class ${calculatedClass}, not class ${classType}`
-      });
+    if (classType !== 'D') {
+      const calculatedClass = determineNumberClass(number);
+      if (calculatedClass !== classType) {
+        return res.status(400).json({
+          success: false,
+          message: `Number ${number} belongs to class ${calculatedClass}, not class ${classType}`
+        });
+      }
     }
 
     // Get current active round
     const currentRound = await Result.findOne({ status: "active" }).sort({ createdAt: -1 });
-    
     if (!currentRound) {
       return res.status(400).json({
         success: false,
         message: "No active round found"
+      });
+    }
+    // Enforce betting window: only allow bets in first 50 minutes of each hour
+    const now = new Date();
+    const roundStart = new Date(currentRound.startTime);
+    const roundEnd = new Date(currentRound.endTime);
+    const minutesSinceStart = Math.floor((now - roundStart) / 60000);
+    const minutesToEnd = Math.floor((roundEnd - now) / 60000);
+    if (minutesSinceStart < 0 || minutesToEnd < 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Betting is not open for this round."
+      });
+    }
+    if (minutesToEnd < 10) {
+      return res.status(400).json({
+        success: false,
+        message: "Betting is locked for the last 10 minutes of the round."
       });
     }
     
@@ -211,15 +239,13 @@ const getValidNumbers = async (req, res) => {
   try {
     const { classType } = req.params;
     
-    if (!["A", "B", "C"].includes(classType)) {
+    if (!["A", "B", "C", "D"].includes(classType)) {
       return res.status(400).json({
         success: false,
-        message: "Invalid class type. Must be A, B, or C"
+        message: "Invalid class type. Must be A, B, C, or D"
       });
     }
-    
     const validNumbers = generateValidNumbers(classType);
-    
     res.json({
       success: true,
       message: `Valid numbers for class ${classType} retrieved successfully`,

@@ -35,6 +35,16 @@ const resultSchema = new mongoose.Schema({
     totalWinnings: { type: Number, default: 0 },
     winnersCount: { type: Number, default: 0 }
   },
+  classD: {
+    winningNumber: {
+      type: String,
+      match: [/^[1-9]$/, 'Winning number must be a single digit (1-9)']
+    },
+    totalBets: { type: Number, default: 0 },
+    totalAmount: { type: Number, default: 0 },
+    totalWinnings: { type: Number, default: 0 },
+    winnersCount: { type: Number, default: 0 }
+  },
   startTime: {
     type: Date,
     required: true
@@ -62,7 +72,7 @@ const resultSchema = new mongoose.Schema({
     },
     classType: {
       type: String,
-      enum: ['A', 'B', 'C']
+      enum: ['A', 'B', 'C', 'D']
     },
     number: String,
     betAmount: Number,

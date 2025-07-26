@@ -472,7 +472,6 @@ const toggleUserStatus = async (req, res) => {
 };
 
 module.exports = {
-  getAllUsers,
   getUserDetails,
   manageUserWallet,
   setGameResult,

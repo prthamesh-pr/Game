@@ -107,7 +107,29 @@ const optionalAuth = async (req, res, next) => {
   }
 };
 
+/**
+ * Agent authentication middleware
+ */
+const agentAuth = async (req, res, next) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ success: false, message: 'Access denied. No token provided.' });
+    }
+    const token = authHeader.substring(7);
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    if (decoded.role !== 'agent') {
+      return res.status(403).json({ success: false, message: 'Access denied. Not an agent.' });
+    }
+    req.user = { id: decoded.id, role: decoded.role };
+    next();
+  } catch (error) {
+    return res.status(401).json({ success: false, message: 'Invalid or expired token.' });
+  }
+};
+
 module.exports = {
   authMiddleware,
-  optionalAuth
+  optionalAuth,
+  agentAuth
 };

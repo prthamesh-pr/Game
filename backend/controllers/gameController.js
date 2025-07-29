@@ -318,6 +318,25 @@ const getRecentResults = async (req, res) => {
         .limit(limit);
     const totalCount = await Result.countDocuments({ status: "completed" });
     // ...existing code...
+    res.json({
+      success: true,
+      message: "Recent results retrieved successfully",
+      data: {
+        rounds: completedRounds,
+        pagination: {
+          currentPage: page,
+          totalPages: Math.ceil(totalCount / limit),
+          totalCount,
+          hasNextPage: page < Math.ceil(totalCount / limit),
+          hasPrevPage: page > 1
+        }
+      }
+    });
+  } catch (error) {
+    console.error("Error getting recent results:", error);
+    res.status(500).json({ success: false, message: "Error retrieving recent results" });
+  }
+}
 /**
  * Get User Selection History
  */
@@ -361,24 +380,6 @@ const getUserSelectionHistory = async (req, res) => {
   } catch (error) {
     console.error("Error fetching selection history:", error);
     res.status(500).json({ success: false, message: "Error fetching selection history" });
-  }
-};
-    res.json({
-      success: true,
-      message: "Recent results retrieved successfully",
-      data: {
-        rounds: completedRounds,
-        totalCount,
-        page,
-        limit
-      }
-    });
-  } catch (error) {
-    console.error("Error getting recent results:", error);
-    res.status(500).json({
-      success: false,
-      message: "Error retrieving recent results"
-    });
   }
 };
 
@@ -581,14 +582,15 @@ const getGameNumbers = (req, res) => {
 };
 
 module.exports = {
-  selectNumber,
-  getCurrentRound,
-  getValidNumbers,
-  getGameInfo,
-  getRecentResults,
-  getUserSelectionHistory,
-  cancelSelection,
-  getCurrentSelections,
-  getAllRounds,
-  getGameNumbers
+  selectNumber: selectNumber,
+  getCurrentRound: getCurrentRound,
+  getValidNumbers: getValidNumbers,
+  getGameInfo: getGameInfo,
+  getRecentResults: getRecentResults,
+  getUserSelectionHistory: getUserSelectionHistory,
+  cancelSelection: cancelSelection,
+  getCurrentSelections: getCurrentSelections,
+  getAllRounds: getAllRounds,
+  getGameNumbers: getGameNumbers
 };
+

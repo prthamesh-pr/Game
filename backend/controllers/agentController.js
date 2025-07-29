@@ -12,7 +12,9 @@ const JWT_SECRET = process.env.JWT_SECRET || 'game999secret';
 
 exports.loginAgent = async (req, res) => {
   try {
-    const { mobile, password } = req.body;
+    // Accept either 'mobile' or 'identifier' for login
+    const mobile = req.body.mobile || req.body.identifier;
+    const { password } = req.body;
     const agent = await Agent.findOne({ mobile });
     if (!agent) {
       return res.status(401).json({ success: false, message: 'Invalid mobile or password' });

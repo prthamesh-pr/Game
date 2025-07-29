@@ -20,6 +20,8 @@ const qrRoutes = require('./routes/qrRoutes');
 const settingsRoutes = require('./routes/settingsRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const auditLogRoutes = require('./routes/auditLogRoutes');
+const agentRoutes = require('./routes/agentRoutes');
+const walletRoutes = require('./routes/walletRoutes');
 
 // Import models for seeding
 const Admin = require('./models/Admin');
@@ -206,7 +208,9 @@ app.use('/api/transactions', transactionRoutes);
 app.use('/api/qrcodes', qrRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/notifications', notificationRoutes);
-app.use('/api/auditlogs', auditLogRoutes);
+app.use('/api/audit-logs', auditLogRoutes);
+app.use('/api/agent', agentRoutes);
+app.use('/api/wallet', walletRoutes);
 
 // New API routes for additional features
 app.use('/api/admin', adminRoutes);

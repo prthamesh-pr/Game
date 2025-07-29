@@ -1,4 +1,5 @@
 const express = require('express');
+const router = express.Router();
 const { authMiddleware, optionalAuth } = require('../middleware/authMiddleware');
 const { validationRules, handleValidationErrors, rateLimiters } = require('../middleware/validation');
 const { body } = require('express-validator');
@@ -11,10 +12,21 @@ const {
   cancelSelection,
   getCurrentSelections,
   getAllRounds,
-  getGameNumbers
+  getGameNumbers,
+  getUserSelectionHistory
 } = require('../controllers/gameController');
 
-const router = express.Router();
+/**
+ * @route   GET /api/game/selections/history
+ * @desc    Get user's selection history
+ * @access  Private (User)
+ */
+router.get('/selections/history', [
+  authMiddleware,
+  rateLimiters.general,
+  validationRules.pagination,
+  handleValidationErrors
+], getUserSelectionHistory);
 
 /**
  * @route   POST /api/game/select

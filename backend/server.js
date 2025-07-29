@@ -1,3 +1,13 @@
+
+require('dotenv').config();
+const express = require('express');
+const mongoose = require('mongoose');
+const cors = require('cors');
+const helmet = require('helmet');
+const cron = require('node-cron');
+
+const app = express();
+
 // --- Seed test admin and agent for API tests ---
 const Admin = require('./models/Admin');
 const Agent = require('./models/Agent');
@@ -37,16 +47,9 @@ async function seedTestAccounts() {
 }
 
 seedTestAccounts().catch(console.error);
+
 // Health check endpoint for API monitoring
 app.get('/health', (req, res) => res.json({ success: true, message: 'API is healthy' }));
-require('dotenv').config();
-const express = require('express');
-const mongoose = require('mongoose');
-const cors = require('cors');
-const helmet = require('helmet');
-const cron = require('node-cron');
-
-const app = express();
 
 // Import middleware
 const { securityHeaders, requestLogger } = require('./middleware/validation');

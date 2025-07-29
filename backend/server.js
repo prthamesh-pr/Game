@@ -1,3 +1,44 @@
+// --- Seed test admin and agent for API tests ---
+const Admin = require('./models/Admin');
+const Agent = require('./models/Agent');
+const bcrypt = require('bcrypt');
+
+async function seedTestAccounts() {
+  // Seed admin
+  const adminEmail = '963sohamraut@gmail.com';
+  const adminPassword = 'admin123';
+  let admin = await Admin.findOne({ email: adminEmail });
+  if (!admin) {
+    const passwordHash = await bcrypt.hash(adminPassword, 12);
+    admin = await Admin.create({
+      email: adminEmail,
+      username: 'apitestadmin',
+      passwordHash,
+      fullName: 'API Test Admin',
+      role: 'admin',
+      permissions: { canViewReports: true, canManageUsers: true }
+    });
+    console.log('Seeded test admin');
+  }
+
+  // Seed agent
+  const agentMobile = 'agent1';
+  const agentPassword = 'agentpass';
+  let agent = await Agent.findOne({ mobile: agentMobile });
+  if (!agent) {
+    agent = await Agent.create({
+      fullName: 'API Test Agent',
+      mobile: agentMobile,
+      password: agentPassword,
+      referralCode: 'apitestref',
+    });
+    console.log('Seeded test agent');
+  }
+}
+
+seedTestAccounts().catch(console.error);
+// Health check endpoint for API monitoring
+app.get('/health', (req, res) => res.json({ success: true, message: 'API is healthy' }));
 require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');

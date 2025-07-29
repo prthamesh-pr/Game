@@ -1,3 +1,15 @@
+const bcrypt = require('bcryptjs');
+
+agentSchema.pre('save', async function(next) {
+  if (!this.isModified('password')) return next();
+  try {
+    const saltRounds = 12;
+    this.password = await bcrypt.hash(this.password, saltRounds);
+    next();
+  } catch (error) {
+    next(error);
+  }
+});
 const mongoose = require('mongoose');
 
 const agentSchema = new mongoose.Schema({

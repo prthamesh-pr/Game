@@ -5,7 +5,7 @@
 
 const axios = require('axios');
 
-const BASE_URL = 'http://localhost:5000';
+const BASE_URL = 'https://game-39rz.onrender.com';
 let userToken = '';
 let adminToken = '';
 
@@ -22,7 +22,7 @@ const testUser = {
 };
 
 const testAdmin = {
-  email: '963sohamraut@gmail.com',
+  identifier: 'apitestadmin',
   password: 'admin123'
 };
 
@@ -97,7 +97,7 @@ class APITester {
     // Test 3: User Registration (or skip if exists)
     await this.test('User Registration', async () => {
       try {
-        const result = await this.makeRequest('/api/user/create', 'POST', testUser);
+        const result = await this.makeRequest('/api/auth/register', 'POST', testUser);
         if (!result.success) throw new Error(result.message);
         userToken = result.token;
       } catch (error) {
@@ -112,7 +112,7 @@ class APITester {
 
     // Test 4: User Login
     await this.test('User Login', async () => {
-      const result = await this.makeRequest('/api/user/login', 'POST', {
+      const result = await this.makeRequest('/api/auth/login', 'POST', {
         identifier: testUser.username,
         password: testUser.password
       });
@@ -130,7 +130,7 @@ class APITester {
     // Test 6: Agent Login
     await this.test('Agent Login', async () => {
       const result = await this.makeRequest('/api/agent/login', 'POST', {
-        identifier: 'agent1',
+        mobile: 'agent1',
         password: 'agentpass'
       });
       if (!result.data || !result.data.token) throw new Error(result.message || 'No agent token received');
@@ -243,8 +243,7 @@ class APITester {
         amount: 100,
         upiId: 'test@upi',
         userName: 'Test User',
-        paymentApp: 'GooglePay',
-        userId: 'user_id_here'
+        paymentApp: 'GooglePay'
       }, userToken);
       if (!result.success) throw new Error(result.message);
     });
@@ -254,8 +253,7 @@ class APITester {
       const result = await this.makeRequest('/api/wallet/withdraw', 'POST', {
         amount: 50,
         phoneNumber: '9876543210',
-        paymentApp: 'GooglePay',
-        userId: 'user_id_here'
+        paymentApp: 'GooglePay'
       }, userToken);
       if (!result.success) throw new Error(result.message);
     });

@@ -64,9 +64,6 @@ const auditLogRoutes = require('./routes/auditLogRoutes');
 const agentRoutes = require('./routes/agentRoutes');
 const walletRoutes = require('./routes/walletRoutes');
 
-// Import models for seeding
-const Admin = require('./models/Admin');
-const bcrypt = require('bcryptjs');
 
 const app = express();
 

@@ -46,6 +46,8 @@ const cors = require('cors');
 const helmet = require('helmet');
 const cron = require('node-cron');
 
+const app = express();
+
 // Import middleware
 const { securityHeaders, requestLogger } = require('./middleware/validation');
 
@@ -63,9 +65,6 @@ const notificationRoutes = require('./routes/notificationRoutes');
 const auditLogRoutes = require('./routes/auditLogRoutes');
 const agentRoutes = require('./routes/agentRoutes');
 const walletRoutes = require('./routes/walletRoutes');
-
-
-const app = express();
 
 // Socket.IO setup for real-time notifications
 const http = require('http').createServer(app);

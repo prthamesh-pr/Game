@@ -23,6 +23,12 @@ const userSchema = new mongoose.Schema({
     trim: true,
     lowercase: true
   },
+  referral: {
+    type: String,
+    required: false,
+    trim: true,
+    default: ''
+  },
   passwordHash: {
     type: String,
     required: [true, 'Password is required'],

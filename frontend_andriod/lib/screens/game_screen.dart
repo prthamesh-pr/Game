@@ -5,7 +5,6 @@ import '../providers/game_provider.dart';
 import '../widgets/custom_appbar.dart';
 import '../widgets/bet_dialog.dart';
 import '../utils/utils.dart';
-import '../services/game_service.dart';
 
 class GameScreen extends StatefulWidget {
   final String gameClass;
@@ -18,7 +17,6 @@ class GameScreen extends StatefulWidget {
 
 class _GameScreenState extends State<GameScreen> {
   late List<String> _numbers = [];
-  final GameService _gameService = GameService();
   bool _isLoading = true;
 
   @override
@@ -32,36 +30,274 @@ class _GameScreenState extends State<GameScreen> {
       _isLoading = true;
     });
 
-    try {
-      final response = await _gameService.getValidNumbers(widget.gameClass);
-      setState(() {
-        if (response['data'] != null &&
-            response['data']['validNumbers'] != null) {
-          List<String> nums = (response['data']['validNumbers'] as List)
-              .map((n) => n.toString())
-              .toList();
-          if (widget.gameClass == 'D') {
-            nums.sort(
-              (a, b) => int.parse(a).compareTo(int.parse(b)),
-            ); // Ascending
-          } else {
-            nums.sort(
-              (a, b) => int.parse(b).compareTo(int.parse(a)),
-            ); // Descending
-          }
-          _numbers = nums;
-        } else {
-          _numbers = [];
-        }
-      });
-    } catch (e) {
-      Utils.showToast('Error loading numbers: $e', isError: true);
-      _numbers = [];
-    } finally {
-      setState(() {
-        _isLoading = false;
-      });
+    await Future.delayed(const Duration(milliseconds: 300)); // Simulate loading
+
+    List<String> nums = [];
+    switch (widget.gameClass) {
+      case 'A':
+        nums = [
+          '0',
+          '127',
+          '136',
+          '145',
+          '190',
+          '235',
+          '280',
+          '370',
+          '479',
+          '460',
+          '569',
+          '389',
+          '578',
+          '1',
+          '128',
+          '137',
+          '146',
+          '236',
+          '245',
+          '290',
+          '380',
+          '470',
+          '489',
+          '560',
+          '678',
+          '579',
+          '2',
+          '129',
+          '138',
+          '147',
+          '156',
+          '237',
+          '246',
+          '345',
+          '390',
+          '480',
+          '570',
+          '589',
+          '679',
+          '3',
+          '120',
+          '139',
+          '148',
+          '157',
+          '238',
+          '247',
+          '256',
+          '346',
+          '490',
+          '580',
+          '175',
+          '256',
+          '4',
+          '130',
+          '149',
+          '158',
+          '167',
+          '239',
+          '248',
+          '257',
+          '347',
+          '356',
+          '590',
+          '680',
+          '789',
+          '5',
+          '140',
+          '159',
+          '168',
+          '230',
+          '249',
+          '258',
+          '267',
+          '348',
+          '357',
+          '456',
+          '690',
+          '780',
+          '6',
+          '123',
+          '150',
+          '169',
+          '178',
+          '240',
+          '259',
+          '268',
+          '349',
+          '358',
+          '457',
+          '367',
+          '790',
+          '7',
+          '124',
+          '160',
+          '179',
+          '250',
+          '269',
+          '278',
+          '340',
+          '359',
+          '368',
+          '458',
+          '467',
+          '890',
+          '8',
+          '125',
+          '134',
+          '170',
+          '189',
+          '260',
+          '279',
+          '350',
+          '369',
+          '378',
+          '459',
+          '567',
+          '468',
+          '9',
+          '135',
+          '180',
+          '234',
+          '270',
+          '289',
+          '360',
+          '379',
+          '450',
+          '469',
+          '478',
+          '568',
+          '679',
+        ];
+        break;
+      case 'B':
+        nums = [
+          '0',
+          '550',
+          '668',
+          '244',
+          '299',
+          '226',
+          '334',
+          '488',
+          '667',
+          '118',
+          '1',
+          '100',
+          '119',
+          '155',
+          '227',
+          '335',
+          '344',
+          '399',
+          '588',
+          '669',
+          '2',
+          '200',
+          '110',
+          '228',
+          '255',
+          '336',
+          '449',
+          '660',
+          '688',
+          '778',
+          '3',
+          '300',
+          '166',
+          '229',
+          '337',
+          '355',
+          '445',
+          '599',
+          '779',
+          '788',
+          '4',
+          '400',
+          '112',
+          '220',
+          '266',
+          '338',
+          '446',
+          '455',
+          '699',
+          '770',
+          '5',
+          '500',
+          '113',
+          '122',
+          '177',
+          '339',
+          '366',
+          '447',
+          '799',
+          '889',
+          '6',
+          '600',
+          '114',
+          '277',
+          '330',
+          '448',
+          '466',
+          '556',
+          '880',
+          '899',
+          '7',
+          '700',
+          '115',
+          '133',
+          '188',
+          '223',
+          '377',
+          '449',
+          '557',
+          '566',
+          '8',
+          '800',
+          '116',
+          '224',
+          '233',
+          '288',
+          '440',
+          '477',
+          '558',
+          '990',
+          '9',
+          '900',
+          '117',
+          '144',
+          '199',
+          '225',
+          '388',
+          '559',
+          '577',
+          '667',
+        ];
+        break;
+      case 'C':
+        nums = [
+          '000',
+          '111',
+          '222',
+          '333',
+          '444',
+          '555',
+          '666',
+          '777',
+          '888',
+          '999',
+        ];
+        break;
+      case 'D':
+        nums = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
+        nums.sort((a, b) => int.parse(a).compareTo(int.parse(b)));
+        break;
+      default:
+        nums = [];
     }
+
+    setState(() {
+      _numbers = nums;
+      _isLoading = false;
+    });
   }
 
   Color _getClassColor() {
@@ -75,33 +311,36 @@ class _GameScreenState extends State<GameScreen> {
 
     if (user == null) return;
 
+    // Calculate time slot for current time
+    final now = DateTime.now();
+    final hour = now.hour;
+    final slotHour = hour < 11 ? 11 : (hour > 23 ? 23 : hour);
+    final timeSlotStr =
+        '${slotHour > 12 ? slotHour - 12 : slotHour}:00 ${slotHour >= 12 ? 'PM' : 'AM'}';
+
     showDialog(
       context: context,
       builder: (context) => BetDialog(
         selectedNumber: number,
         gameClass: widget.gameClass,
         walletBalance: user.walletBalance,
+        timeSlot: timeSlotStr,
         onBetPlaced: (amount) async {
-          // Place bet
           final success = await gameProvider.placeBet(
             gameClass: widget.gameClass,
             number: number,
             amount: amount,
             authProvider: authProvider,
+            timeSlot: timeSlotStr,
           );
 
-          if (success) {
-            // The wallet balance will be updated by the placeBet method
-
-            if (context.mounted) {
-              // Show success message but don't navigate away
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Bet placed successfully!'),
-                  backgroundColor: Colors.green,
-                ),
-              );
-            }
+          if (success && context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Bet placed successfully!'),
+                backgroundColor: Colors.green,
+              ),
+            );
           }
         },
       ),
@@ -128,6 +367,115 @@ class _GameScreenState extends State<GameScreen> {
       );
     }
 
+    if (widget.gameClass == 'A' || widget.gameClass == 'B') {
+      Map<String, List<String>> grouped = {};
+      String? currentTitle;
+      for (var num in _numbers) {
+        if (num.length == 1 && int.tryParse(num) != null) {
+          currentTitle = num;
+          grouped.putIfAbsent(currentTitle, () => []);
+        } else if (currentTitle != null) {
+          grouped[currentTitle]!.add(num);
+        }
+      }
+
+      return SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: grouped.entries.map((entry) {
+            final sortedNumbers = entry.value
+              ..sort((a, b) => int.parse(a).compareTo(int.parse(b)));
+            final int columns = 3;
+            final int total = sortedNumbers.length;
+            final int rows = (total / columns).ceil();
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8.0),
+                  child: Center(
+                    child: Text(
+                      'Title ${entry.key}',
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.orange,
+                      ),
+                    ),
+                  ),
+                ),
+                const Divider(thickness: 2, color: Colors.orange),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    for (int row = 0; row < rows; row++)
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          for (int col = 0; col < columns; col++)
+                            if (row * columns + col < total)
+                              SizedBox(
+                                width: 100,
+                                child: Align(
+                                  alignment: Alignment.center,
+                                  child: _buildNumberTile(
+                                    sortedNumbers[row * columns + col],
+                                    row * columns + col,
+                                  ),
+                                ),
+                              )
+                            else
+                              const SizedBox(width: 100),
+                        ],
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+              ],
+            );
+          }).toList(),
+        ),
+      );
+    }
+
+    // For class C and D: show numbers in a centered 3-column grid
+    if (widget.gameClass == 'C' || widget.gameClass == 'D') {
+      final sortedNumbers = _numbers.toList()
+        ..sort((a, b) => int.parse(a).compareTo(int.parse(b)));
+      final int columns = 3;
+      final int total = sortedNumbers.length;
+      final int rows = (total / columns).ceil();
+      return SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            for (int row = 0; row < rows; row++)
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  for (int col = 0; col < columns; col++)
+                    if (row * columns + col < total)
+                      SizedBox(
+                        width: 100,
+                        child: Align(
+                          alignment: Alignment.center,
+                          child: _buildNumberTile(
+                            sortedNumbers[row * columns + col],
+                            row * columns + col,
+                          ),
+                        ),
+                      )
+                    else
+                      const SizedBox(width: 100),
+                ],
+              ),
+          ],
+        ),
+      );
+    }
+
     return GridView.builder(
       padding: const EdgeInsets.all(16),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -139,52 +487,35 @@ class _GameScreenState extends State<GameScreen> {
       itemCount: _numbers.length,
       itemBuilder: (context, index) {
         return _buildNumberTile(_numbers[index], index);
+
+        // For class C and D: show numbers in a centered 3-column grid, last row centered
       },
     );
   }
 
-  Widget _buildNumberTile(String number, int index) {
-    final baseColor = Utils.getRandomColor(index);
-
-    return InkWell(
-      onTap: () => _showBetDialog(number),
-      borderRadius: BorderRadius.circular(10),
-      child: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              baseColor,
-              Color.fromRGBO(
-                (baseColor.r * 255.0).round() & 0xff,
-                (baseColor.g * 255.0).round() & 0xff,
-                (baseColor.b * 255.0).round() & 0xff,
-                0.7,
-              ),
-            ],
-          ),
-          borderRadius: BorderRadius.circular(10),
-          boxShadow: [
-            BoxShadow(
-              color: Color.fromRGBO(
-                (baseColor.r * 255.0).round() & 0xff,
-                (baseColor.g * 255.0).round() & 0xff,
-                (baseColor.b * 255.0).round() & 0xff,
-                0.5,
-              ),
-              blurRadius: 4,
-              offset: const Offset(0, 2),
+  Widget _buildNumberTile(String number, int index, {bool customSize = false}) {
+    return Padding(
+      padding: const EdgeInsets.all(6.0),
+      child: SizedBox(
+        width: customSize ? 120 : 110,
+        height: customSize ? 60 : 54,
+        child: ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.orange,
+            foregroundColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
             ),
-          ],
-        ),
-        child: Center(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            elevation: 3,
+          ),
+          onPressed: () => _showBetDialog(number),
           child: Text(
             number,
             style: const TextStyle(
-              fontSize: 22,
+              fontSize: 24,
               fontWeight: FontWeight.bold,
-              color: Colors.white,
+              letterSpacing: 1.2,
             ),
           ),
         ),
@@ -206,7 +537,6 @@ class _GameScreenState extends State<GameScreen> {
           IconButton(
             icon: const Icon(Icons.info_outline),
             onPressed: () {
-              // Show game class description
               showDialog(
                 context: context,
                 builder: (context) => AlertDialog(
@@ -231,12 +561,7 @@ class _GameScreenState extends State<GameScreen> {
         children: [
           Container(
             width: double.infinity,
-            color: Color.fromRGBO(
-              (_getClassColor().r * 255.0).round() & 0xff,
-              (_getClassColor().g * 255.0).round() & 0xff,
-              (_getClassColor().b * 255.0).round() & 0xff,
-              0.1,
-            ),
+            color: _getClassColor().withOpacity(0.1),
             padding: const EdgeInsets.symmetric(vertical: 10),
             child: Text(
               'Select a number to place your bet',

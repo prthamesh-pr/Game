@@ -26,6 +26,7 @@ const getUserProfile = async (req, res) => {
         username: user.username,
         email: user.email,
         mobileNumber: user.mobileNumber,
+        referral: user.referral || '',
         walletBalance: user.walletBalance || user.wallet,
         isGuest: user.isGuest || false,
         selectedNumbers: user.selectedNumbers,
@@ -52,7 +53,7 @@ const getUserProfile = async (req, res) => {
  */
 const updateUserProfile = async (req, res) => {
   try {
-    const { username, email } = req.body;
+    const { username, email, mobileNumber, referral } = req.body;
     const userId = req.user.id;
 
     // Check if username is already taken by another user
@@ -61,7 +62,6 @@ const updateUserProfile = async (req, res) => {
         username: username,
         _id: { $ne: userId }
       });
-
       if (existingUser) {
         return res.status(400).json({
           success: false,
@@ -69,7 +69,6 @@ const updateUserProfile = async (req, res) => {
         });
       }
     }
-    
     // Check if email is already taken by another user (only if provided)
     if (email && email.trim() !== '') {
       const existingUser = await User.findOne({
@@ -83,17 +82,29 @@ const updateUserProfile = async (req, res) => {
         });
       }
     }
-
+    // Check if mobileNumber is already taken by another user (only if provided)
+    if (mobileNumber && mobileNumber.trim() !== '') {
+      const existingUser = await User.findOne({
+        mobileNumber: mobileNumber,
+        _id: { $ne: userId }
+      });
+      if (existingUser) {
+        return res.status(400).json({
+          success: false,
+          message: 'Mobile number already taken'
+        });
+      }
+    }
     const updateData = {};
     if (username) updateData.username = username;
     if (email && email.trim() !== '') updateData.email = email;
-
+    if (mobileNumber && mobileNumber.trim() !== '') updateData.mobileNumber = mobileNumber;
+    if (referral && referral.trim() !== '') updateData.referral = referral;
     const updatedUser = await User.findByIdAndUpdate(
       userId,
       updateData,
       { new: true, runValidators: true }
     ).select('-passwordHash');
-
     res.json({
       success: true,
       message: 'Profile updated successfully',
@@ -102,6 +113,7 @@ const updateUserProfile = async (req, res) => {
         username: updatedUser.username,
         email: updatedUser.email,
         mobileNumber: updatedUser.mobileNumber,
+        referral: updatedUser.referral || '',
         walletBalance: updatedUser.walletBalance || updatedUser.wallet,
         isGuest: updatedUser.isGuest || false
       }
@@ -139,8 +151,20 @@ const getUserSelections = async (req, res) => {
     // Attach round info to each selection
     const selectionsWithRound = selections.map(sel => {
       const round = rounds.find(r => r.roundId === sel.roundId);
+      let timeSlot = null;
+      if (round && round.startTime) {
+        const date = new Date(round.startTime);
+        let hours = date.getHours();
+        const minutes = date.getMinutes();
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        hours = hours % 12;
+        hours = hours ? hours : 12; // the hour '0' should be '12'
+        const timeStr = `${hours}:${minutes.toString().padStart(2, '0')} ${ampm}`;
+        timeSlot = timeStr;
+      }
       return {
         ...sel.toObject(),
+        timeSlot,
         roundInfo: round ? {
           startTime: round.startTime,
           endTime: round.endTime,

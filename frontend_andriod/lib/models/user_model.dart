@@ -1,34 +1,42 @@
 class User {
-  final String id;
-  final String username;
-  String email;
-  double walletBalance;
-  bool isGuest;
+  final String? id;
+  final String? username;
+  final String? email;
+  final double walletBalance;
+  final String? mobileNumber;
+  final String? referral;
+  final bool isGuest;
 
   User({
-    required this.id,
-    required this.username,
-    required this.email,
+    this.id,
+    this.username,
+    this.email,
     required this.walletBalance,
+    this.mobileNumber,
+    this.referral,
     this.isGuest = false,
   });
 
   Map<String, dynamic> toJson() {
     return {
-      'id': id,
-      'username': username,
-      'email': email,
+      'id': id ?? '',
+      'username': username ?? '',
+      'email': email ?? '',
       'walletBalance': walletBalance,
+      'mobileNumber': mobileNumber ?? '',
+      'referral': referral ?? '',
       'isGuest': isGuest,
     };
   }
 
   factory User.fromJson(Map<String, dynamic> json) {
     return User(
-      id: json['id'] as String,
-      username: json['username'] as String,
-      email: json['email'] as String,
-      walletBalance: json['walletBalance'].toDouble(),
+      id: json['id']?.toString(),
+      username: json['username']?.toString(),
+      email: json['email']?.toString(),
+      walletBalance: (json['walletBalance'] ?? 0).toDouble(),
+      mobileNumber: json['mobileNumber']?.toString(),
+      referral: json['referral']?.toString(),
       isGuest: json['isGuest'] ?? false,
     );
   }
@@ -38,12 +46,18 @@ class User {
     String? username,
     String? email,
     double? walletBalance,
+    String? mobileNumber,
+    String? referral,
+    bool? isGuest,
   }) {
     return User(
       id: id ?? this.id,
       username: username ?? this.username,
       email: email ?? this.email,
       walletBalance: walletBalance ?? this.walletBalance,
+      mobileNumber: mobileNumber ?? this.mobileNumber,
+      referral: referral ?? this.referral,
+      isGuest: isGuest ?? this.isGuest,
     );
   }
 }

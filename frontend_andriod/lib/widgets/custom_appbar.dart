@@ -4,6 +4,8 @@ import '../utils/utils.dart';
 import '../screens/transactions_screen.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
+import 'add_token_dialog.dart';
+import 'withdraw_dialog.dart';
 
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
@@ -212,143 +214,30 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   // Show dialog to add tokens
   void _showAddTokensDialog(BuildContext context) {
-    final TextEditingController amountController = TextEditingController();
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
-
+    final qrImageUrl = '';
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Add Tokens'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('Enter amount to add to your wallet'),
-            const SizedBox(height: 16),
-            TextField(
-              controller: amountController,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                labelText: 'Amount',
-                prefixIcon: Icon(Icons.currency_rupee),
-                border: OutlineInputBorder(),
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              final amount = double.tryParse(amountController.text);
-              if (amount != null && amount > 0) {
-                Navigator.pop(context);
-
-                // Show loading indicator
-                showDialog(
-                  context: context,
-                  barrierDismissible: false,
-                  builder: (context) =>
-                      const Center(child: CircularProgressIndicator()),
-                );
-
-                try {
-                  // Refresh wallet balance from API
-                  await authProvider.refreshWalletBalance();
-                  Navigator.of(context).pop(); // Close loading dialog
-                  Utils.showToast('Wallet refreshed successfully');
-                } catch (e) {
-                  Navigator.of(context).pop(); // Close loading dialog
-                  Utils.showToast('Failed to refresh wallet', isError: true);
-                }
-              } else {
-                Utils.showToast('Please enter a valid amount', isError: true);
-              }
-            },
-            child: const Text('Add Tokens'),
-          ),
-        ],
+      builder: (context) => AddTokenDialog(
+        qrImageUrl: qrImageUrl,
+        onSubmit: (amount, upiId, userName, paymentApp) async {
+          // TODO: Implement token add logic, e.g. call API
+          await authProvider.refreshWalletBalance();
+        },
       ),
     );
   }
 
   // Show dialog to withdraw tokens
   void _showWithdrawDialog(BuildContext context) {
-    final TextEditingController amountController = TextEditingController();
-    final TextEditingController accountController = TextEditingController();
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
-
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Withdraw Tokens'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('Enter withdrawal details'),
-            const SizedBox(height: 16),
-            TextField(
-              controller: amountController,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                labelText: 'Amount',
-                prefixIcon: Icon(Icons.currency_rupee),
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: accountController,
-              decoration: const InputDecoration(
-                labelText: 'Account Details',
-                prefixIcon: Icon(Icons.account_balance),
-                border: OutlineInputBorder(),
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              final amount = double.tryParse(amountController.text);
-              if (amount != null &&
-                  amount > 0 &&
-                  accountController.text.isNotEmpty) {
-                Navigator.pop(context);
-
-                // Show loading indicator
-                showDialog(
-                  context: context,
-                  barrierDismissible: false,
-                  builder: (context) =>
-                      const Center(child: CircularProgressIndicator()),
-                );
-
-                try {
-                  // Refresh wallet balance from API
-                  await authProvider.refreshWalletBalance();
-                  Navigator.of(context).pop(); // Close loading dialog
-                  Utils.showToast('Withdrawal request submitted');
-                } catch (e) {
-                  Navigator.of(context).pop(); // Close loading dialog
-                  Utils.showToast(
-                    'Failed to process withdrawal',
-                    isError: true,
-                  );
-                }
-              } else {
-                Utils.showToast('Please enter valid details', isError: true);
-              }
-            },
-            child: const Text('Withdraw'),
-          ),
-        ],
+      builder: (context) => WithdrawDialog(
+        onSubmit: (amount, phone, paymentApp) async {
+          // TODO: Implement withdraw logic, e.g. call API
+          await authProvider.refreshWalletBalance();
+        },
       ),
     );
   }

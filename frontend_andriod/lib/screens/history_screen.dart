@@ -1,247 +1,210 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:intl/intl.dart';
-import '../constants/colors.dart';
-import '../providers/auth_provider.dart';
-import '../providers/game_provider.dart';
-import '../models/gameplay_model.dart';
 import '../widgets/custom_appbar.dart';
-import '../widgets/loading_spinner.dart';
+import 'package:provider/provider.dart';
+import '../models/history_model.dart';
+import '../providers/auth_provider.dart';
+// Removed unused import
 
-class HistoryScreen extends StatelessWidget {
+class HistoryScreen extends StatefulWidget {
   const HistoryScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final authProvider = Provider.of<AuthProvider>(context);
-    final gameProvider = Provider.of<GameProvider>(context);
-    final user = authProvider.currentUser;
+  State<HistoryScreen> createState() => _HistoryScreenState();
+}
 
-    if (user == null) {
-      return const Scaffold(body: Center(child: Text('User not found')));
+class _HistoryScreenState extends State<HistoryScreen> {
+  List<HistoryItem> _history = [];
+  bool _isLoading = true;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchHistory();
+  }
+
+  Future<void> _fetchHistory() async {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+    try {
+      final userService = Provider.of<AuthProvider>(
+        context,
+        listen: false,
+      ).userService;
+      final response = await userService.getUserHistory();
+      final List<dynamic> data = response['data']['selections'] ?? [];
+      setState(() {
+        _history = data.map((e) => HistoryItem.fromJson(e)).toList();
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _error = 'Failed to load history';
+        _isLoading = false;
+      });
     }
+  }
 
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: CustomAppBar(
-        title: 'My Play History',
-        walletBalance: user.walletBalance,
+        title: 'History',
+        walletBalance: null,
         showWallet: true,
       ),
-      body: RefreshIndicator(
-        onRefresh: () => gameProvider.loadGameData(),
-        child: gameProvider.isLoading
-            ? const Center(child: LoadingSpinner())
-            : FutureBuilder<List<GamePlay>>(
-                // Fetch user's game history on demand
-                future: _fetchUserGameHistory(user.id, gameProvider),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: LoadingSpinner());
-                  }
-
-                  if (snapshot.hasError) {
-                    return Center(
-                      child: Text(
-                        'Error loading history: ${snapshot.error}',
-                        textAlign: TextAlign.center,
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : _error != null
+          ? Center(child: Text(_error!))
+          : ListView.builder(
+              itemCount: _history.length,
+              padding: const EdgeInsets.all(16),
+              itemBuilder: (context, index) {
+                final item = _history[index];
+                final Color statusColor = item.status == 'WIN'
+                    ? Colors.green
+                    : item.status == 'LOSE'
+                    ? Colors.red
+                    : Colors.orange;
+                final IconData statusIcon = item.status == 'WIN'
+                    ? Icons.emoji_events
+                    : item.status == 'LOSE'
+                    ? Icons.close
+                    : Icons.hourglass_top;
+                return Card(
+                  margin: const EdgeInsets.only(bottom: 14),
+                  elevation: 5,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [statusColor.withOpacity(0.12), Colors.white],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
                       ),
-                    );
-                  }
-
-                  final userGamePlays = snapshot.data ?? [];
-
-                  if (userGamePlays.isEmpty) {
-                    return const Center(child: Text('No game history found'));
-                  }
-
-                  return ListView.builder(
-                    itemCount: userGamePlays.length,
-                    padding: const EdgeInsets.all(16),
-                    itemBuilder: (context, index) {
-                      return _buildHistoryItem(context, userGamePlays[index]);
-                    },
-                  );
-                },
-              ),
-      ),
-    );
-  }
-
-  Future<List<GamePlay>> _fetchUserGameHistory(
-    String userId,
-    GameProvider gameProvider,
-  ) async {
-    // First try to get data from provider cache
-    List<GamePlay> userGamePlays = gameProvider.getGamePlaysByUser(userId);
-
-    // If no data in cache, explicitly load it
-    if (userGamePlays.isEmpty && !gameProvider.isLoading) {
-      await gameProvider.loadGameData();
-      userGamePlays = gameProvider.getGamePlaysByUser(userId);
-    }
-
-    return userGamePlays;
-  }
-
-  Widget _buildHistoryItem(BuildContext context, GamePlay gamePlay) {
-    final Color statusColor = gamePlay.isWinner
-        ? AppColors.success
-        : AppColors.error;
-    final String statusText = gamePlay.isWinner ? 'WIN' : 'LOSE';
-    final String formattedDate = DateFormat(
-      'dd MMM yyyy, hh:mm a',
-    ).format(gamePlay.playedAt);
-
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      elevation: 3,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Class ${gamePlay.gameClass}',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: statusColor,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    statusText,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 12,
+                      borderRadius: BorderRadius.circular(18),
                     ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 6),
-            Text(
-              formattedDate,
-              style: const TextStyle(fontSize: 13, color: AppColors.textLight),
-            ),
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text('Selected Number'),
-                      const SizedBox(height: 4),
-                      Text(
-                        gamePlay.selectedNumber,
-                        style: const TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                if (gamePlay.resultNumber != null)
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text('Result Number'),
-                        const SizedBox(height: 4),
-                        Text(
-                          gamePlay.resultNumber!,
-                          style: const TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
+                    child: Padding(
+                      padding: const EdgeInsets.all(18),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(
+                                    statusIcon,
+                                    color: statusColor,
+                                    size: 28,
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Text(
+                                    item.timeSlot,
+                                    style: const TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.black87,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 6,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: statusColor,
+                                  borderRadius: BorderRadius.circular(10),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: statusColor.withOpacity(0.18),
+                                      blurRadius: 6,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: Text(
+                                  item.status,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 14,
+                                    letterSpacing: 1.1,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
-                        ),
-                      ],
+                          const SizedBox(height: 10),
+                          Row(
+                            children: [
+                              const Icon(
+                                Icons.numbers,
+                                color: Colors.blueGrey,
+                                size: 20,
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                'Selected: ',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.black54,
+                                ),
+                              ),
+                              Text(
+                                item.selectedNumber,
+                                style: const TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                            ],
+                          ),
+                          if (item.resultNumber != null)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 6),
+                              child: Row(
+                                children: [
+                                  const Icon(
+                                    Icons.check_circle_outline,
+                                    color: Colors.teal,
+                                    size: 20,
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    'Result: ',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      color: Colors.black54,
+                                    ),
+                                  ),
+                                  Text(
+                                    item.resultNumber!,
+                                    style: const TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.black87,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                        ],
+                      ),
                     ),
                   ),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      const Text('Amount'),
-                      const SizedBox(height: 4),
-                      Text(
-                        '₹${gamePlay.amount.toStringAsFixed(2)}',
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+                );
+              },
             ),
-            const Divider(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Start: ' + (gamePlay.roundInfo?.startTime ?? '-'),
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: AppColors.textLight,
-                      ),
-                    ),
-                    Text(
-                      'End: ' + (gamePlay.roundInfo?.endTime ?? '-'),
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: AppColors.textLight,
-                      ),
-                    ),
-                  ],
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: (gamePlay.roundInfo?.resultDeclared ?? false)
-                        ? Colors.green[100]
-                        : Colors.orange[100],
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    (gamePlay.roundInfo?.resultDeclared ?? false)
-                        ? 'Result Declared'
-                        : 'Pending',
-                    style: TextStyle(
-                      color: (gamePlay.roundInfo?.resultDeclared ?? false)
-                          ? Colors.green
-                          : Colors.orange,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 12,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

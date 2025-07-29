@@ -15,6 +15,7 @@ class AuthProvider with ChangeNotifier {
   // Services
   final AuthService _authService = AuthService();
   final UserService _userService = UserService();
+  UserService get userService => _userService;
 
   User? get currentUser => _currentUser;
   bool get isLoading => _isLoading;
@@ -111,12 +112,24 @@ class AuthProvider with ChangeNotifier {
   }
 
   // Register user
-  Future<bool> register(String username, String email, String password, [String? mobileNumber]) async {
+  Future<bool> register(
+    String username,
+    String email,
+    String password, [
+    String? mobileNumber,
+    String? referral,
+  ]) async {
     _isLoading = true;
     notifyListeners();
 
     try {
-      final user = await _authService.register(username, email, password, mobileNumber);
+      final user = await _authService.register(
+        username,
+        email,
+        password,
+        mobileNumber,
+        referral,
+      );
       _currentUser = user;
       _isLoggedIn = true;
       return true;
@@ -130,12 +143,22 @@ class AuthProvider with ChangeNotifier {
   }
 
   // Update profile
-  Future<bool> updateProfile(String username, String email) async {
+  Future<bool> updateProfile(
+    String username,
+    String email, {
+    String? mobileNumber,
+    String? referral,
+  }) async {
     _isLoading = true;
     notifyListeners();
 
     try {
-      final user = await _userService.updateUserProfile(username, email);
+      final user = await _userService.updateUserProfile(
+        username,
+        email,
+        mobileNumber: mobileNumber,
+        referral: referral,
+      );
       _currentUser = user;
       return true;
     } catch (e) {

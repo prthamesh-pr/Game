@@ -11,11 +11,12 @@ class WithdrawDialog extends StatefulWidget {
 class _WithdrawDialogState extends State<WithdrawDialog> {
   final TextEditingController _amountController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
-  final TextEditingController _nameController = TextEditingController();
   String _selectedApp = 'GooglePay';
 
   @override
   Widget build(BuildContext context) {
+    final referral =
+        'REF12345'; // Mock referral, replace with profile fetch if available
     return AlertDialog(
       title: const Text('Withdraw Tokens'),
       content: SingleChildScrollView(
@@ -34,12 +35,10 @@ class _WithdrawDialogState extends State<WithdrawDialog> {
             TextField(
               controller: _phoneController,
               keyboardType: TextInputType.phone,
-              decoration: const InputDecoration(labelText: 'Phone Number'),
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: _nameController,
-              decoration: const InputDecoration(labelText: 'Name of User'),
+              decoration: const InputDecoration(
+                labelText: 'Phone Number',
+                prefixIcon: Icon(Icons.phone),
+              ),
             ),
             const SizedBox(height: 8),
             DropdownButtonFormField<String>(
@@ -55,6 +54,15 @@ class _WithdrawDialogState extends State<WithdrawDialog> {
                 labelText: 'Select Payment App',
               ),
             ),
+            const SizedBox(height: 8),
+            TextField(
+              enabled: false,
+              decoration: InputDecoration(
+                labelText: 'Referral Number',
+                hintText: referral,
+                prefixIcon: const Icon(Icons.card_giftcard),
+              ),
+            ),
           ],
         ),
       ),
@@ -67,10 +75,20 @@ class _WithdrawDialogState extends State<WithdrawDialog> {
           onPressed: () {
             final amount = int.tryParse(_amountController.text) ?? 0;
             final phone = _phoneController.text.trim();
-            final name = _nameController.text.trim();
-            if (amount > 0 && phone.isNotEmpty && name.isNotEmpty) {
+            if (amount > 0 && phone.isNotEmpty) {
               widget.onSubmit(amount, phone, _selectedApp);
               Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Withdrawal request submitted!')),
+              );
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text(
+                    'Please enter a valid amount and phone number.',
+                  ),
+                ),
+              );
             }
           },
           child: const Text('Withdraw'),

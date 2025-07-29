@@ -9,6 +9,7 @@ class BetDialog extends StatefulWidget {
   final String gameClass;
   final double walletBalance;
   final Future<void> Function(double) onBetPlaced;
+  final String? timeSlot;
 
   const BetDialog({
     super.key,
@@ -16,6 +17,7 @@ class BetDialog extends StatefulWidget {
     required this.gameClass,
     required this.walletBalance,
     required this.onBetPlaced,
+    required this.timeSlot,
   });
 
   @override
@@ -171,12 +173,7 @@ class _BetDialogState extends State<BetDialog> {
             const SizedBox(height: 10),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                _quickBetButton(50),
-                _quickBetButton(100),
-                _quickBetButton(200),
-                _quickBetButton(500),
-              ],
+              children: [_quickBetButton(50), _quickBetButton(100)],
             ),
             const SizedBox(height: 15),
             Row(

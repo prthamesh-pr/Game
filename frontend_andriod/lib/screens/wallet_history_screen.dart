@@ -4,7 +4,7 @@ import 'package:intl/intl.dart';
 import '../models/wallet_transaction_model.dart';
 import '../services/user_service.dart';
 import '../utils/utils.dart';
-import '../widgets/custom_app_bar.dart';
+import '../widgets/custom_appbar.dart';
 import '../widgets/loading_overlay.dart';
 
 class WalletHistoryScreen extends StatefulWidget {

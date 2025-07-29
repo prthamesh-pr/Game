@@ -32,6 +32,10 @@ const withdrawalRequestSchema = new mongoose.Schema({
     ref: 'Admin'
   },
   processedAt: Date,
+  rejectReason: {
+    type: String,
+    default: ''
+  },
   createdAt: {
     type: Date,
     default: Date.now

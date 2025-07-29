@@ -22,6 +22,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController =
       TextEditingController();
+  final TextEditingController _referralController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
 
   bool _isObscurePassword = true;
@@ -56,6 +57,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         _emailController.text.trim(),
         _passwordController.text,
         _mobileNumberController.text.trim(),
+        _referralController.text.trim(),
       );
 
       if (success && mounted) {
@@ -148,7 +150,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     },
                   ),
                   const SizedBox(height: 16),
-                  
+
                   // Mobile Number field (optional)
                   TextFormField(
                     controller: _mobileNumberController,
@@ -170,6 +172,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       }
                       return null;
                     },
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Referral field (optional, always visible)
+                  TextFormField(
+                    controller: _referralController,
+                    decoration: InputDecoration(
+                      labelText: 'Referral (Optional)',
+                      prefixIcon: const Icon(Icons.card_giftcard),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
                   ),
                   const SizedBox(height: 16),
 

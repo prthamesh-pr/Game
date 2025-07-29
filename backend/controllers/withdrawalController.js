@@ -120,8 +120,11 @@ exports.getPendingWithdrawals = async (req, res) => {
 // Admin approves/rejects withdrawal
 exports.processWithdrawal = async (req, res) => {
   try {
-    const { requestId, action } = req.body; // action: 'approve' or 'reject'
+    const { requestId, action, reason } = req.body; // action: 'approve' or 'reject'
     const adminId = req.user.id;
+    if (!['approve', 'reject'].includes(action)) {
+      return res.status(400).json({ success: false, message: 'Invalid action' });
+    }
     const request = await WithdrawalRequest.findById(requestId);
     if (!request || request.status !== 'pending') {
       return res.status(404).json({ success: false, message: 'Request not found or already processed' });
@@ -129,15 +132,37 @@ exports.processWithdrawal = async (req, res) => {
     request.status = action === 'approve' ? 'approved' : 'rejected';
     request.adminId = adminId;
     request.processedAt = new Date();
-    await request.save();
-    // If rejected, refund user
     if (action === 'reject') {
+      request.rejectReason = reason || 'No reason provided';
+      // Refund user
       const user = await User.findById(request.userId);
-      user.walletBalance += request.amount;
-      await user.save();
+      if (user) {
+        user.walletBalance += request.amount;
+        await user.save();
+      }
     }
+    await request.save();
+    // Audit log (if available)
+    try {
+      const AuditLog = require('../models/AuditLog');
+      await AuditLog.create({
+        action: `withdrawal_${action}`,
+        performedBy: adminId,
+        targetId: requestId,
+        details: { reason: action === 'reject' ? request.rejectReason : undefined }
+      });
+    } catch (e) {}
+    // Notify user (if notification system available)
+    try {
+      const Notification = require('../models/Notification');
+      await Notification.create({
+        userId: request.userId,
+        title: `Withdrawal ${action === 'approve' ? 'Approved' : 'Rejected'}`,
+        message: action === 'approve' ? 'Your withdrawal request has been approved.' : `Your withdrawal request was rejected. Reason: ${request.rejectReason}`
+      });
+    } catch (e) {}
     res.json({ success: true, message: `Withdrawal ${action}d`, data: request });
   } catch (err) {
-    res.status(500).json({ success: false, message: 'Error processing withdrawal request' });
+    res.status(500).json({ success: false, message: 'Error processing withdrawal request', error: err.message });
   }
 };

@@ -90,15 +90,19 @@ class GameProvider with ChangeNotifier {
     required String number,
     required double amount,
     required AuthProvider authProvider,
+    String? timeSlot,
   }) async {
     _isLoading = true;
     notifyListeners();
 
     try {
+      final userId = authProvider.currentUser?.id;
       await _gameService.selectNumber(
         classType: gameClass,
         number: int.parse(number),
         amount: amount,
+        userId: userId,
+        timeSlot: timeSlot,
       );
 
       // Refresh user wallet balance
@@ -241,6 +245,7 @@ class GameProvider with ChangeNotifier {
     required String number,
     required double amount,
     required AuthProvider authProvider,
+    String? timeSlot,
   }) async {
     // This is just an alias for selectNumber method
     return selectNumber(
@@ -248,6 +253,7 @@ class GameProvider with ChangeNotifier {
       number: number,
       amount: amount,
       authProvider: authProvider,
+      timeSlot: timeSlot,
     );
   }
 

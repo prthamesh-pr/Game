@@ -8,7 +8,7 @@ const { isValidMobile, isValidUsername } = require('../utils/numberUtils');
  */
 const registerUser = async (req, res) => {
   try {
-    const { username, mobileNumber, email, password } = req.body;
+    const { username, mobileNumber, email, password, referral } = req.body;
 
     // Check if user already exists (username and mobile are required, email is optional)
     const queryConditions = [
@@ -75,6 +75,10 @@ const registerUser = async (req, res) => {
     if (mobileNumber && mobileNumber.trim() !== '') {
       userData.mobileNumber = mobileNumber;
     }
+    // Add referral if provided
+    if (referral && referral.trim() !== '') {
+      userData.referral = referral;
+    }
     const user = new User(userData);
     await user.save();
 
@@ -92,6 +96,7 @@ const registerUser = async (req, res) => {
         username: user.username,
         email: user.email,
         mobileNumber: user.mobileNumber,
+        referral: user.referral || '',
         walletBalance: user.walletBalance || user.wallet,
         isGuest: user.isGuest || false,
         role: user.role
@@ -137,6 +142,7 @@ const loginUser = async (req, res) => {
         username: user.username,
         email: user.email,
         mobileNumber: user.mobileNumber,
+        referral: user.referral || '',
         walletBalance: user.walletBalance || user.wallet,
         isGuest: user.isGuest || false,
         role: user.role,

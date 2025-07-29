@@ -18,10 +18,20 @@ router.get('/:id', withdrawalController.getWithdrawalById);
 // POST create a new withdrawal request (user action)
 router.post('/', withdrawalController.createWithdrawal);
 
-// POST approve withdrawal
-router.post('/:id/approve', withdrawalController.approveWithdrawal);
 
-// POST reject withdrawal
-router.post('/:id/reject', withdrawalController.rejectWithdrawal);
+const { validationRules, handleValidationErrors } = require('../middleware/validation');
+
+// POST process withdrawal (approve/reject)
+router.post('/process',
+  [
+    validationRules.mongoId,
+    // Validate action and reason
+    require('express-validator').body('action').isIn(['approve', 'reject']).withMessage('Action must be approve or reject'),
+    require('express-validator').body('requestId').isMongoId().withMessage('Invalid requestId'),
+    require('express-validator').body('reason').optional().isString().trim().isLength({ max: 200 }).withMessage('Reason must be a string up to 200 chars')
+  ],
+  handleValidationErrors,
+  withdrawalController.processWithdrawal
+);
 
 module.exports = router;

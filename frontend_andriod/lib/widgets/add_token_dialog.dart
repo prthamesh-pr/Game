@@ -16,19 +16,22 @@ class AddTokenDialog extends StatefulWidget {
 
 class _AddTokenDialogState extends State<AddTokenDialog> {
   final TextEditingController _amountController = TextEditingController();
-  final TextEditingController _upiController = TextEditingController();
-  final TextEditingController _nameController = TextEditingController();
+  // Removed unused UPI and Name controllers
   String _selectedApp = 'GooglePay';
 
   @override
   Widget build(BuildContext context) {
+    final referral =
+        'REF12345'; // Mock referral, replace with profile fetch if available
     return AlertDialog(
       title: const Text('Add Tokens'),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Image.asset('assets/images/app_icon.png', height: 120),
+            widget.qrImageUrl.isNotEmpty
+                ? Image.network(widget.qrImageUrl, height: 120)
+                : Image.asset('assets/images/app_icon.png', height: 120),
             const SizedBox(height: 12),
             TextField(
               controller: _amountController,
@@ -39,16 +42,8 @@ class _AddTokenDialogState extends State<AddTokenDialog> {
               ),
             ),
             const SizedBox(height: 8),
-            TextField(
-              controller: _upiController,
-              decoration: const InputDecoration(labelText: 'Enter UPI ID'),
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: _nameController,
-              decoration: const InputDecoration(labelText: 'Name of User'),
-            ),
-            const SizedBox(height: 8),
+            // Removed UPI ID and Name fields as per latest requirements
+            // Only amount, payment app, referral number are shown
             DropdownButtonFormField<String>(
               value: _selectedApp,
               items: const [
@@ -62,6 +57,15 @@ class _AddTokenDialogState extends State<AddTokenDialog> {
                 labelText: 'Select Payment App',
               ),
             ),
+            const SizedBox(height: 8),
+            TextField(
+              enabled: false,
+              decoration: InputDecoration(
+                labelText: 'Referral Number',
+                hintText: referral,
+                prefixIcon: const Icon(Icons.card_giftcard),
+              ),
+            ),
           ],
         ),
       ),
@@ -73,11 +77,16 @@ class _AddTokenDialogState extends State<AddTokenDialog> {
         ElevatedButton(
           onPressed: () {
             final amount = int.tryParse(_amountController.text) ?? 0;
-            final upi = _upiController.text.trim();
-            final name = _nameController.text.trim();
-            if (amount > 0 && upi.isNotEmpty && name.isNotEmpty) {
-              widget.onSubmit(amount, upi, name, _selectedApp);
+            if (amount > 0) {
+              widget.onSubmit(amount, '', '', _selectedApp);
               Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Token request submitted!')),
+              );
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Please enter a valid amount.')),
+              );
             }
           },
           child: const Text('Add Token'),

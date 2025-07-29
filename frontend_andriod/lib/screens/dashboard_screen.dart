@@ -240,6 +240,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final screenWidth = MediaQuery.of(context).size.width;
     final isTablet = screenWidth > 600;
 
+    final gameProvider = Provider.of<GameProvider>(context);
+    // D, C, B, A order
+    final classOrder = ['D', 'C', 'B', 'A'];
+    final classDescriptions = {
+      'A': 'Triple Same Digits (111, 222, 333, ...)',
+      'B': 'Double Same Digits (112, 113, 223, ...)',
+      'C': 'All Different Digits (123, 456, 789, ...)',
+      'D': 'Single Digit (1-9)',
+    };
+    final classColors = {
+      'A': AppColors.classA,
+      'B': AppColors.classB,
+      'C': AppColors.classC,
+      'D': AppColors.primary,
+    };
+
+    // Get numbers for each class (ascending)
+    // If you want to use backend dashboard stats, replace below with gameProvider.dashboardStats['classStats']
+    // Here, we use getValidNumbers for each class
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -253,35 +272,54 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ),
         const SizedBox(height: 15),
         Column(
-          children: [
-            _buildGameClassCard(
-              'A',
-              'Triple Same Digits (111, 222, 333, ...)',
-              AppColors.classA,
-              context,
-            ),
-            const SizedBox(height: 12),
-            _buildGameClassCard(
-              'B',
-              'Double Same Digits (112, 113, 223, ...)',
-              AppColors.classB,
-              context,
-            ),
-            const SizedBox(height: 12),
-            _buildGameClassCard(
-              'C',
-              'All Different Digits (123, 456, 789, ...)',
-              AppColors.classC,
-              context,
-            ),
-            const SizedBox(height: 12),
-            _buildGameClassCard(
-              'D',
-              'Single Digit (1-9)',
-              AppColors.primary,
-              context,
-            ),
-          ],
+          children: classOrder.map((classType) {
+            return FutureBuilder<List<String>>(
+              future: gameProvider.getValidNumbers(classType),
+              builder: (context, snapshot) {
+                final numbers = (snapshot.data ?? []).toList()
+                  ..sort((a, b) => int.parse(a).compareTo(int.parse(b)));
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildGameClassCard(
+                      classType,
+                      classDescriptions[classType]!,
+                      classColors[classType]!,
+                      context,
+                    ),
+                    if (numbers.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8.0),
+                        child: (classType == 'D' || classType == 'C')
+                            ? Wrap(
+                                spacing: 8,
+                                children: numbers
+                                    .map((num) => Chip(label: Text(num)))
+                                    .toList(),
+                              )
+                            : Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: numbers
+                                    .map(
+                                      (num) => Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                          vertical: 2.0,
+                                        ),
+                                        child: Text(
+                                          num,
+                                          style: TextStyle(fontSize: 16),
+                                        ),
+                                      ),
+                                    )
+                                    .toList(),
+                              ),
+                      ),
+                    const SizedBox(height: 12),
+                  ],
+                );
+              },
+            );
+          }).toList(),
         ),
       ],
     );

@@ -7,7 +7,7 @@ import 'package:provider/provider.dart';
 import '../constants/colors.dart';
 import '../providers/auth_provider.dart';
 import '../utils/utils.dart';
-import '../widgets/custom_app_bar.dart';
+import '../widgets/custom_appbar.dart';
 import '../widgets/loading_overlay.dart';
 import 'profile_edit_screen.dart';
 import 'wallet_history_screen.dart';
@@ -83,8 +83,8 @@ class _AccountScreenState extends State<AccountScreen> {
                           radius: 40,
                           backgroundColor: AppColors.primary,
                           child: Text(
-                            user?.username.isNotEmpty == true
-                                ? user!.username[0].toUpperCase()
+                            user?.username?.isNotEmpty == true
+                                ? user!.username!.substring(0, 1).toUpperCase()
                                 : '?',
                             style: const TextStyle(
                               color: Colors.white,
@@ -183,6 +183,11 @@ class _AccountScreenState extends State<AccountScreen> {
                                 final walletService = WalletService();
                                 final qrUrl = await walletService
                                     .fetchQrCodeUrl();
+                                final authProvider = Provider.of<AuthProvider>(
+                                  context,
+                                  listen: false,
+                                );
+                                final user = authProvider.currentUser;
                                 showDialog(
                                   context: context,
                                   builder: (context) => AddTokenDialog(
@@ -200,6 +205,7 @@ class _AccountScreenState extends State<AccountScreen> {
                                                 upiId,
                                                 userName,
                                                 paymentApp,
+                                                user?.id ?? '',
                                               );
                                           ScaffoldMessenger.of(
                                             context,
@@ -229,6 +235,11 @@ class _AccountScreenState extends State<AccountScreen> {
                               ),
                               onPressed: () {
                                 final walletService = WalletService();
+                                final authProvider = Provider.of<AuthProvider>(
+                                  context,
+                                  listen: false,
+                                );
+                                final user = authProvider.currentUser;
                                 showDialog(
                                   context: context,
                                   builder: (context) => WithdrawDialog(
@@ -239,6 +250,7 @@ class _AccountScreenState extends State<AccountScreen> {
                                                 amount,
                                                 phone,
                                                 paymentApp,
+                                                user?.id ?? '',
                                               );
                                           ScaffoldMessenger.of(
                                             context,

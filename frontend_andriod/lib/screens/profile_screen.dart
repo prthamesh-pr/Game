@@ -5,8 +5,9 @@ import '../providers/auth_provider.dart';
 import '../widgets/custom_appbar.dart';
 import '../widgets/loading_spinner.dart';
 import '../utils/utils.dart';
-import 'login_screen.dart';
+// import 'login_screen.dart';
 import 'transactions_screen.dart';
+import 'profile_edit_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -57,7 +58,9 @@ class ProfileScreen extends StatelessWidget {
                               radius: isLargeScreen ? 80 : 60,
                               backgroundColor: AppColors.primary,
                               child: Text(
-                                user.username.substring(0, 1).toUpperCase(),
+                                ((user.username?.isNotEmpty ?? false)
+                                    ? user.username!.substring(0, 1).toUpperCase()
+                                    : '?'),
                                 style: TextStyle(
                                   fontSize: isLargeScreen ? 60 : 48,
                                   fontWeight: FontWeight.bold,
@@ -67,7 +70,7 @@ class ProfileScreen extends StatelessWidget {
                             ),
                             SizedBox(height: isLargeScreen ? 30 : 20),
                             Text(
-                              user.username,
+                              user.username ?? '-',
                               style: TextStyle(
                                 fontSize: isLargeScreen ? 28 : 24,
                                 fontWeight: FontWeight.bold,
@@ -75,7 +78,7 @@ class ProfileScreen extends StatelessWidget {
                             ),
                             const SizedBox(height: 8),
                             Text(
-                              user.email,
+                              user.email ?? '-',
                               style: TextStyle(
                                 fontSize: isLargeScreen ? 18 : 16,
                                 color: AppColors.textSecondary,
@@ -102,6 +105,8 @@ class ProfileScreen extends StatelessWidget {
   }
 
   Widget _buildInfoCard(BuildContext context, user, bool isLargeScreen) {
+    final userMap = user.toJson(); // Use this for safe map access
+
     return Container(
       width: double.infinity,
       padding: EdgeInsets.all(isLargeScreen ? 28 : 20),
@@ -128,14 +133,49 @@ class ProfileScreen extends StatelessWidget {
             ),
           ),
           SizedBox(height: isLargeScreen ? 20 : 16),
-          _buildInfoRow('ID', user.id, isLargeScreen),
-          _buildInfoRow('Username', user.username, isLargeScreen),
-          _buildInfoRow('Email', user.email, isLargeScreen),
-          _buildInfoRow('Mobile Number', user.mobileNumber, isLargeScreen),
+          _buildInfoRow('ID', user.id ?? '-', isLargeScreen),
+          _buildInfoRow('Username', user.username ?? '-', isLargeScreen),
+          _buildInfoRow('Email', user.email ?? '-', isLargeScreen),
+          _buildInfoRow(
+            'Mobile Number',
+            userMap['mobileNumber']?.toString() ?? '-',
+            isLargeScreen,
+          ),
+          _buildInfoRow(
+            'Referral Number',
+            userMap['referral']?.toString() ?? '-',
+            isLargeScreen,
+          ),
           _buildInfoRow(
             'Token Balance',
-            Utils.formatCurrency(user.walletBalance),
+            Utils.formatCurrency(user.walletBalance ?? 0),
             isLargeScreen,
+          ),
+          SizedBox(height: isLargeScreen ? 20 : 16),
+          Align(
+            alignment: Alignment.centerRight,
+            child: ElevatedButton.icon(
+              icon: const Icon(Icons.edit),
+              label: const Text('Edit Profile'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                padding: EdgeInsets.symmetric(
+                  vertical: isLargeScreen ? 12 : 10,
+                  horizontal: isLargeScreen ? 20 : 14,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(isLargeScreen ? 10 : 8),
+                ),
+              ),
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const ProfileEditScreen(),
+                  ),
+                );
+              },
+            ),
           ),
         ],
       ),
@@ -193,23 +233,6 @@ class ProfileScreen extends StatelessWidget {
                 builder: (context) => const TransactionsScreen(),
               ),
             );
-          },
-        ),
-        SizedBox(height: isLargeScreen ? 16 : 12),
-        _buildActionButton(
-          icon: Icons.logout,
-          label: 'Logout',
-          color: AppColors.error,
-          isLargeScreen: isLargeScreen,
-          onTap: () async {
-            await authProvider.logout();
-            if (context.mounted) {
-              Navigator.pushAndRemoveUntil(
-                context,
-                MaterialPageRoute(builder: (context) => const LoginScreen()),
-                (route) => false,
-              );
-            }
           },
         ),
       ],

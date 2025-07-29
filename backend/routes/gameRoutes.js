@@ -10,7 +10,8 @@ const {
   getRecentResults,
   cancelSelection,
   getCurrentSelections,
-  getAllRounds
+  getAllRounds,
+  getGameNumbers
 } = require('../controllers/gameController');
 
 const router = express.Router();
@@ -76,6 +77,13 @@ router.get('/round/current', [
 router.get('/numbers/:classType', [
   rateLimiters.general
 ], getValidNumbers);
+
+/**
+ * @route   GET /api/game/numbers
+ * @desc    Get list of numbers for a game class
+ * @access  Public
+ */
+router.get('/numbers', getGameNumbers);
 
 /**
  * @route   GET /api/game/info

@@ -27,6 +27,7 @@ class WalletService {
     String upiId,
     String userName,
     String paymentApp,
+    String userId,
   ) async {
     try {
       await _apiService.post(ApiConstants.addTokenEndpoint, {
@@ -34,6 +35,7 @@ class WalletService {
         'upiId': upiId,
         'userName': userName,
         'paymentApp': paymentApp,
+        'userId': userId,
       });
       return true;
     } catch (e) {
@@ -47,12 +49,14 @@ class WalletService {
     int amount,
     String phone,
     String paymentApp,
+    String userId,
   ) async {
     try {
       await _apiService.post(ApiConstants.withdrawEndpoint, {
         'amount': amount,
         'phoneNumber': phone,
         'paymentApp': paymentApp,
+        'userId': userId,
       });
       return true;
     } catch (e) {

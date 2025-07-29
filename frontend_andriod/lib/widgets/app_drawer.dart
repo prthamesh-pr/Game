@@ -57,31 +57,35 @@ class _AppDrawerState extends State<AppDrawer> {
             ),
             child: SafeArea(
               child: Padding(
-                padding: const EdgeInsets.all(16.0),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24.0,
+                  vertical: 20.0,
+                ),
                 child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     // App Logo
                     Container(
-                      width: 40,
-                      height: 40,
+                      width: 56,
+                      height: 56,
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(20),
+                        borderRadius: BorderRadius.circular(28),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.2),
-                            blurRadius: 6,
-                            offset: const Offset(0, 3),
+                            color: Colors.black.withOpacity(0.15),
+                            blurRadius: 8,
+                            offset: const Offset(0, 4),
                           ),
                         ],
                       ),
                       child: const Icon(
                         Icons.casino,
-                        size: 24,
+                        size: 36,
                         color: AppColors.primary,
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 18),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -91,26 +95,32 @@ class _AppDrawerState extends State<AppDrawer> {
                             AppConstants.appName,
                             style: const TextStyle(
                               color: Colors.white,
-                              fontSize: 16,
+                              fontSize: 22,
                               fontWeight: FontWeight.bold,
+                              letterSpacing: 0.5,
                             ),
                           ),
+                          const SizedBox(height: 4),
                           Text(
                             user?.username ?? 'Guest User',
                             style: const TextStyle(
-                              color: Colors.white70,
-                              fontSize: 13,
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
                             ),
                           ),
                           if (user?.email != null)
-                            Text(
-                              user!.email,
-                              style: const TextStyle(
-                                color: Colors.white60,
-                                fontSize: 11,
+                            Padding(
+                              padding: const EdgeInsets.only(top: 2.0),
+                              child: Text(
+                                user!.email ?? '',
+                                style: const TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 13,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 1,
                               ),
-                              overflow: TextOverflow.ellipsis,
-                              maxLines: 1,
                             ),
                         ],
                       ),
@@ -181,26 +191,7 @@ class _AppDrawerState extends State<AppDrawer> {
                   },
                 ),
                 const SizedBox(height: 8),
-                const Divider(),
-                ListTile(
-                  leading: const Icon(
-                    Icons.exit_to_app,
-                    color: AppColors.error,
-                  ),
-                  title: const Text('Logout'),
-                  onTap: () async {
-                    await authProvider.logout();
-                    if (context.mounted) {
-                      Navigator.pushAndRemoveUntil(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const LoginScreen(),
-                        ),
-                        (route) => false,
-                      );
-                    }
-                  },
-                ),
+                // ...existing code...
                 const Divider(),
                 ListTile(
                   leading: const Icon(

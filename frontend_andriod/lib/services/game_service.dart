@@ -104,12 +104,18 @@ class GameService {
     required String classType,
     required int number,
     required double amount,
+    String? userId,
+    String? timeSlot,
   }) async {
     try {
-      final response = await _apiService.post(
-        ApiConstants.selectNumberEndpoint,
-        {'classType': classType, 'number': number, 'amount': amount},
-      );
+      final response = await _apiService
+          .post(ApiConstants.selectNumberEndpoint, {
+            'classType': classType,
+            'number': number,
+            'amount': amount,
+            if (userId != null) 'userId': userId,
+            if (timeSlot != null) 'timeSlot': timeSlot,
+          });
 
       Utils.showToast('Number selected successfully');
       return response;

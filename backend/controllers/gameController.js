@@ -10,11 +10,40 @@ const {
 } = require('../utils/numberUtils');
 
 /**
+ * Static game numbers for each class
+ */
+const GAME_NUMBERS = {
+  A: {
+    title: 'Class A',
+    numbers: [
+      '0','127','136','145','190','235','280','370','479','460','569','389','578','1','128','137','146','236','245','290','380','470','489','560','678','579','2','129','138','147','156','237','246','345','390','480','570','589','679','3','120','139','148','157','238','247','256','346','490','580','175','256','4','130','149','158','167','239','248','257','347','356','590','680','789','5','140','159','168','230','249','258','267','348','357','456','690','780','6','123','150','169','178','240','259','268','349','358','457','367','790','7','124','160','179','250','269','278','340','359','368','458','467','890','8','125','134','170','189','260','279','350','369','378','459','567','468','9','135','180','234','270','289','360','379','450','469','478','568','679'
+    ]
+  },
+  B: {
+    title: 'Class B',
+    numbers: [
+      '0','550','668','244','299','226','334','488','667','118','1','100','119','155','227','335','344','399','588','669','2','200','110','228','255','336','449','660','688','778','3','300','166','229','337','355','445','599','779','788','4','400','112','220','266','338','446','455','699','770','5','500','113','122','177','339','366','447','799','889','6','600','114','277','330','448','466','556','880','899','7','700','115','133','188','223','377','449','557','566','8','800','116','224','233','288','440','477','558','990','9','900','117','144','199','225','388','559','577','667'
+    ]
+  },
+  C: {
+    title: 'Class C',
+    numbers: [
+      '000','111','222','333','444','555','666','777','888','999'
+    ]
+  },
+  D: {
+    title: 'Class D',
+    numbers: ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
+  }
+};
+
+/**
  * Select Number for Game
  */
 const selectNumber = async (req, res) => {
   try {
-    const userId = req.user.id;
+    // Accept userId from body if provided (for admin placing on behalf of user)
+    const userId = req.body.userId || req.user.id;
     const selections = Array.isArray(req.body.selections) ? req.body.selections : [req.body];
 
     // Get current active round
@@ -42,7 +71,7 @@ const selectNumber = async (req, res) => {
     let results = [];
 
     for (const sel of selections) {
-      const { classType, number, amount } = sel;
+      const { classType, number, amount, timeSlot } = sel;
       // Validate inputs
       if (!["A", "B", "C", "D"].includes(classType)) {
         results.push({ success: false, message: `Invalid class type for ${number}` });
@@ -77,7 +106,7 @@ const selectNumber = async (req, res) => {
         continue;
       }
       totalAmount += amount;
-      results.push({ success: true, classType, number, amount });
+      results.push({ success: true, classType, number, amount, timeSlot });
     }
 
     if (user.walletBalance < totalAmount) {
@@ -87,8 +116,16 @@ const selectNumber = async (req, res) => {
     let createdSelections = [];
     for (let i = 0; i < selections.length; i++) {
       if (!results[i].success) continue;
-      const { classType, number, amount } = selections[i];
-      const newSelection = new NumberSelection({ userId, roundId: currentRound.roundId, number, classType, amount, status: "pending" });
+      const { classType, number, amount, timeSlot } = selections[i];
+      const newSelection = new NumberSelection({
+        userId,
+        roundId: currentRound.roundId,
+        number,
+        classType,
+        amount,
+        status: "pending",
+        placedAt: timeSlot ? new Date(timeSlot) : new Date()
+      });
       const balanceBefore = user.walletBalance;
       user.walletBalance -= amount;
       const transaction = new WalletTransaction({
@@ -100,11 +137,20 @@ const selectNumber = async (req, res) => {
         balanceBefore,
         balanceAfter: user.walletBalance,
         roundId: currentRound.roundId,
-        metadata: { classType, selectedNumber: number }
+        metadata: { classType, selectedNumber: number, timeSlot: timeSlot || null, userId }
       });
       await newSelection.save();
       await transaction.save();
-      createdSelections.push({ id: newSelection._id, number, classType, amount, roundId: currentRound.roundId, createdAt: newSelection.createdAt });
+      createdSelections.push({
+        id: newSelection._id,
+        userId: newSelection.userId,
+        classType: newSelection.classType,
+        number: newSelection.number,
+        amount: newSelection.amount,
+        timeSlot: newSelection.placedAt,
+        roundId: newSelection.roundId,
+        createdAt: newSelection.createdAt
+      });
     }
     await user.save();
     res.status(201).json({
@@ -267,32 +313,66 @@ const getRecentResults = async (req, res) => {
     const skip = (page - 1) * limit;
     
     const completedRounds = await Result.find({ status: "completed" })
-      .sort({ endTime: -1 })
+        .sort({ endTime: -1 })
+        .skip(skip)
+        .limit(limit);
+    const totalCount = await Result.countDocuments({ status: "completed" });
+    // ...existing code...
+/**
+ * Get User Selection History
+ */
+const getUserSelectionHistory = async (req, res) => {
+  try {
+    const userId = req.body.userId || req.user.id;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const skip = (page - 1) * limit;
+    const selections = await NumberSelection.find({ userId })
+      .sort({ placedAt: -1 })
       .skip(skip)
       .limit(limit);
-    
-    const totalCount = await Result.countDocuments({ status: "completed" });
-    
+    const totalSelections = await NumberSelection.countDocuments({ userId });
+    res.json({
+      success: true,
+      message: "Selection history retrieved successfully",
+      data: {
+        selections: selections.map(sel => ({
+          id: sel._id,
+          userId: sel.userId,
+          classType: sel.classType,
+          number: sel.number,
+          amount: sel.amount,
+          timeSlot: sel.placedAt,
+          roundId: sel.roundId,
+          status: sel.status,
+          winningAmount: sel.winningAmount,
+          resultProcessedAt: sel.resultProcessedAt,
+          createdAt: sel.createdAt
+        })),
+        pagination: {
+          currentPage: page,
+          totalPages: Math.ceil(totalSelections / limit),
+          totalSelections,
+          hasNextPage: page < Math.ceil(totalSelections / limit),
+          hasPrevPage: page > 1
+        }
+      }
+    });
+  } catch (error) {
+    console.error("Error fetching selection history:", error);
+    res.status(500).json({ success: false, message: "Error fetching selection history" });
+  }
+};
     res.json({
       success: true,
       message: "Recent results retrieved successfully",
       data: {
-        results: completedRounds.map(round => ({
-          id: round._id,
-          roundNumber: round.roundNumber,
-          endTime: round.endTime,
-          winningNumbers: round.winningNumbers
-        })),
-        pagination: {
-          currentPage: page,
-          totalPages: Math.ceil(totalCount / limit),
-          totalCount,
-          hasNext: page < Math.ceil(totalCount / limit),
-          hasPrev: page > 1
-        }
+        rounds: completedRounds,
+        totalCount,
+        page,
+        limit
       }
     });
-    
   } catch (error) {
     console.error("Error getting recent results:", error);
     res.status(500).json({
@@ -302,9 +382,6 @@ const getRecentResults = async (req, res) => {
   }
 };
 
-/**
- * Cancel a Number Selection
- */
 const cancelSelection = async (req, res) => {
   try {
     const { selectionId } = req.params;
@@ -394,7 +471,7 @@ const cancelSelection = async (req, res) => {
   }
 };
 
-/**
+ /**
  * Get Current User Selections
  */
 const getCurrentSelections = async (req, res) => {
@@ -449,48 +526,58 @@ const getCurrentSelections = async (req, res) => {
 const getAllRounds = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 20;
+    const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
-
-    const rounds = await Result.find()
-      .sort({ createdAt: -1 })
-      .limit(limit)
+    const completedRounds = await Result.find({ status: "completed" })
+      .sort({ endTime: -1 })
       .skip(skip)
-      .select('roundNumber status startTime endTime winningNumbers createdAt');
-
-    const totalRounds = await Result.countDocuments();
-    const totalPages = Math.ceil(totalRounds / limit);
-
+      .limit(limit);
+    const totalCount = await Result.countDocuments({ status: "completed" });
+    const results = completedRounds.map(round => ({
+      roundId: round.roundId,
+      resultDate: round.endTime,
+      classes: ['A','B','C','D'].map(cls => {
+        const classObj = round['class' + cls] || {};
+        const winnersArr = Array.isArray(round.winners) ? round.winners : [];
+        return {
+          gameClass: cls,
+          winningNumber: classObj && classObj.winningNumber ? classObj.winningNumber : '',
+          drawnNumbers: winnersArr.filter(w => w.classType === cls).map(w => w.number),
+          totalPrize: classObj && typeof classObj.totalWinnings === 'number' ? classObj.totalWinnings : 0,
+          totalPlayers: classObj && typeof classObj.totalBets === 'number' ? classObj.totalBets : 0
+        };
+      })
+    }));
     res.json({
       success: true,
-      message: "Game rounds retrieved successfully",
+      message: "Recent results retrieved successfully",
       data: {
-        rounds: rounds.map(round => ({
-          id: round._id,
-          roundNumber: round.roundNumber,
-          status: round.status,
-          startTime: round.startTime,
-          endTime: round.endTime,
-          winningNumbers: round.winningNumbers,
-          createdAt: round.createdAt
-        })),
+        results,
         pagination: {
           currentPage: page,
-          totalPages,
-          totalRounds,
-          hasNextPage: page < totalPages,
-          hasPrevPage: page > 1
+          totalPages: Math.ceil(totalCount / limit),
+          totalCount,
+          hasNext: page < Math.ceil(totalCount / limit),
+          hasPrev: page > 1
         }
       }
     });
-    
   } catch (error) {
-    console.error("Error fetching all game rounds:", error);
-    res.status(500).json({
-      success: false,
-      message: "Error fetching game rounds"
-    });
+    console.error("Error getting recent results:", error);
+    res.status(500).json({ success: false, message: "Error retrieving recent results" });
   }
+};
+
+/**
+ * Get Game Numbers for a Given Class
+ */
+const getGameNumbers = (req, res) => {
+  const gameClass = req.query.class || 'A';
+  const classData = GAME_NUMBERS[gameClass];
+  if (!classData) {
+    return res.status(400).json({ success: false, message: 'Invalid game class' });
+  }
+  res.json({ success: true, data: { title: classData.title, numbers: classData.numbers } });
 };
 
 module.exports = {
@@ -499,7 +586,9 @@ module.exports = {
   getValidNumbers,
   getGameInfo,
   getRecentResults,
+  getUserSelectionHistory,
   cancelSelection,
   getCurrentSelections,
-  getAllRounds
+  getAllRounds,
+  getGameNumbers
 };

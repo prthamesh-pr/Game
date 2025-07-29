@@ -9,6 +9,14 @@ import '../utils/utils.dart';
 import 'api_service.dart';
 
 class UserService {
+  // Get user history (selections) for history screen
+  Future<Map<String, dynamic>> getUserHistory({
+    int page = 1,
+    int limit = 20,
+  }) async {
+    return await getUserSelections(page: page, limit: limit);
+  }
+
   final ApiService _apiService = ApiService();
 
   // Singleton pattern
@@ -34,11 +42,18 @@ class UserService {
   }
 
   // Update user profile
-  Future<User> updateUserProfile(String username, String email) async {
+  Future<User> updateUserProfile(
+    String username,
+    String email, {
+    String? mobileNumber,
+    String? referral,
+  }) async {
     try {
       final response = await _apiService.put(ApiConstants.userProfileEndpoint, {
         'username': username,
         'email': email,
+        if (mobileNumber != null) 'mobileNumber': mobileNumber,
+        if (referral != null) 'referral': referral,
       });
 
       final user = User.fromJson(response['user']);

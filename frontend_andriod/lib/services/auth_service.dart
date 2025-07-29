@@ -18,12 +18,24 @@ class AuthService {
   AuthService._internal();
 
   // Login user
-  Future<User> login(String email, String password) async {
+  Future<User> login(String identifier, String password) async {
     try {
-      final response = await _apiService.post(ApiConstants.loginEndpoint, {
-        'identifier': email, // Changed from 'email' to 'identifier'
-        'password': password,
-      }, requireAuth: false);
+      // Accept username or phoneNumber for login
+      final isPhone = RegExp(r'^\d{10,}$').hasMatch(identifier);
+      final loginData = isPhone
+          ? {
+              'phoneNumber': identifier,
+              'password': password,
+            }
+          : {
+              'username': identifier,
+              'password': password,
+            };
+      final response = await _apiService.post(
+        ApiConstants.loginEndpoint,
+        loginData,
+        requireAuth: false,
+      );
 
       // Save auth tokens
       final prefs = await SharedPreferences.getInstance();
@@ -58,6 +70,7 @@ class AuthService {
     String email,
     String password, [
     String? mobileNumber,
+    String? referral,
   ]) async {
     try {
       final Map<String, dynamic> requestData = {
@@ -69,6 +82,10 @@ class AuthService {
       // Add mobile number if provided
       if (mobileNumber != null && mobileNumber.isNotEmpty) {
         requestData['mobileNumber'] = mobileNumber;
+      }
+      // Add referral if provided
+      if (referral != null && referral.isNotEmpty) {
+        requestData['referral'] = referral;
       }
 
       final response = await _apiService.post(

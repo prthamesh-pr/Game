@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../providers/auth_provider.dart';
 import '../utils/utils.dart';
-import '../widgets/custom_app_bar.dart';
+import '../widgets/custom_appbar.dart';
 import '../widgets/loading_overlay.dart';
 
 class ProfileEditScreen extends StatefulWidget {
@@ -17,6 +17,8 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
   final _formKey = GlobalKey<FormState>();
   final _usernameController = TextEditingController();
   final _emailController = TextEditingController();
+  final _mobileController = TextEditingController();
+  final _referralController = TextEditingController();
   bool _isLoading = false;
 
   @override
@@ -28,8 +30,10 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
   void _initializeUserData() {
     final user = Provider.of<AuthProvider>(context, listen: false).currentUser;
     if (user != null) {
-      _usernameController.text = user.username;
-      _emailController.text = user.email;
+      _usernameController.text = user.username ?? '';
+      _emailController.text = user.email ?? '';
+      _mobileController.text = user.mobileNumber?.toString() ?? '';
+      _referralController.text = user.referral?.toString() ?? '';
     }
   }
 
@@ -37,6 +41,8 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
   void dispose() {
     _usernameController.dispose();
     _emailController.dispose();
+    _mobileController.dispose();
+    _referralController.dispose();
     super.dispose();
   }
 
@@ -54,6 +60,8 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
       final success = await authProvider.updateProfile(
         _usernameController.text,
         _emailController.text,
+        mobileNumber: _mobileController.text,
+        referral: _referralController.text,
       );
 
       if (success && mounted) {
@@ -132,6 +140,38 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                     }
                     return null;
                   },
+                ),
+                const SizedBox(height: 16),
+
+                // Mobile Number field
+                TextFormField(
+                  controller: _mobileController,
+                  keyboardType: TextInputType.phone,
+                  decoration: const InputDecoration(
+                    labelText: 'Mobile Number',
+                    prefixIcon: Icon(Icons.phone),
+                    border: OutlineInputBorder(),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter a mobile number';
+                    }
+                    if (value.length < 10) {
+                      return 'Mobile number must be at least 10 digits';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+
+                // Referral Number field
+                TextFormField(
+                  controller: _referralController,
+                  decoration: const InputDecoration(
+                    labelText: 'Referral Number',
+                    prefixIcon: Icon(Icons.card_giftcard),
+                    border: OutlineInputBorder(),
+                  ),
                 ),
                 const SizedBox(height: 32),
 

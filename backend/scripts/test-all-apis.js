@@ -118,9 +118,9 @@ class APITester {
 
       console.log('✅ User registration successful');
 
-      // Test user login
+      // Test user login with the registered user
       const loginResponse = await axios.post(`${BASE_URL}/auth/login`, {
-        identifier: 'testuser@example.com',
+        identifier: 'apitest@example.com',
         password: 'TestPass123!'
       });
 
@@ -313,7 +313,7 @@ class APITester {
 
     try {
       // Test admin login
-      const adminLoginResponse = await axios.post(`${BASE_URL}/admin/login`, {
+      const adminLoginResponse = await axios.post(`${BASE_URL}/auth/admin/login`, {
         email: 'testadmin@example.com',
         password: 'AdminPass123!'
       });

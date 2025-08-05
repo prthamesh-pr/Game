@@ -36,7 +36,6 @@ class _GameScreenState extends State<GameScreen> {
     switch (widget.gameClass) {
       case 'A':
         nums = [
-          '0',
           '127',
           '136',
           '145',
@@ -49,7 +48,6 @@ class _GameScreenState extends State<GameScreen> {
           '569',
           '389',
           '578',
-          '1',
           '128',
           '137',
           '146',
@@ -62,7 +60,6 @@ class _GameScreenState extends State<GameScreen> {
           '560',
           '678',
           '579',
-          '2',
           '129',
           '138',
           '147',
@@ -75,7 +72,6 @@ class _GameScreenState extends State<GameScreen> {
           '570',
           '589',
           '679',
-          '3',
           '120',
           '139',
           '148',
@@ -88,7 +84,6 @@ class _GameScreenState extends State<GameScreen> {
           '580',
           '175',
           '256',
-          '4',
           '130',
           '149',
           '158',
@@ -101,7 +96,6 @@ class _GameScreenState extends State<GameScreen> {
           '590',
           '680',
           '789',
-          '5',
           '140',
           '159',
           '168',
@@ -114,7 +108,6 @@ class _GameScreenState extends State<GameScreen> {
           '456',
           '690',
           '780',
-          '6',
           '123',
           '150',
           '169',
@@ -127,7 +120,6 @@ class _GameScreenState extends State<GameScreen> {
           '457',
           '367',
           '790',
-          '7',
           '124',
           '160',
           '179',
@@ -140,7 +132,6 @@ class _GameScreenState extends State<GameScreen> {
           '458',
           '467',
           '890',
-          '8',
           '125',
           '134',
           '170',
@@ -153,7 +144,6 @@ class _GameScreenState extends State<GameScreen> {
           '459',
           '567',
           '468',
-          '9',
           '135',
           '180',
           '234',
@@ -170,7 +160,6 @@ class _GameScreenState extends State<GameScreen> {
         break;
       case 'B':
         nums = [
-          '0',
           '550',
           '668',
           '244',
@@ -180,7 +169,6 @@ class _GameScreenState extends State<GameScreen> {
           '488',
           '667',
           '118',
-          '1',
           '100',
           '119',
           '155',
@@ -190,7 +178,6 @@ class _GameScreenState extends State<GameScreen> {
           '399',
           '588',
           '669',
-          '2',
           '200',
           '110',
           '228',
@@ -200,7 +187,6 @@ class _GameScreenState extends State<GameScreen> {
           '660',
           '688',
           '778',
-          '3',
           '300',
           '166',
           '229',
@@ -210,7 +196,6 @@ class _GameScreenState extends State<GameScreen> {
           '599',
           '779',
           '788',
-          '4',
           '400',
           '112',
           '220',
@@ -220,7 +205,6 @@ class _GameScreenState extends State<GameScreen> {
           '455',
           '699',
           '770',
-          '5',
           '500',
           '113',
           '122',
@@ -230,7 +214,6 @@ class _GameScreenState extends State<GameScreen> {
           '447',
           '799',
           '889',
-          '6',
           '600',
           '114',
           '277',
@@ -240,7 +223,6 @@ class _GameScreenState extends State<GameScreen> {
           '556',
           '880',
           '899',
-          '7',
           '700',
           '115',
           '133',
@@ -250,7 +232,6 @@ class _GameScreenState extends State<GameScreen> {
           '449',
           '557',
           '566',
-          '8',
           '800',
           '116',
           '224',
@@ -260,7 +241,6 @@ class _GameScreenState extends State<GameScreen> {
           '477',
           '558',
           '990',
-          '9',
           '900',
           '117',
           '144',
@@ -386,129 +366,40 @@ class _GameScreenState extends State<GameScreen> {
       );
     }
 
-    if (widget.gameClass == 'A' || widget.gameClass == 'B') {
-      Map<String, List<String>> grouped = {};
-      String? currentTitle;
-      for (var num in _numbers) {
-        if (num.length == 1 && int.tryParse(num) != null) {
-          currentTitle = num;
-          grouped.putIfAbsent(currentTitle, () => []);
-        } else if (currentTitle != null) {
-          grouped[currentTitle]!.add(num);
-        }
-      }
-
-      return SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: grouped.entries.map((entry) {
-            final sortedNumbers = entry.value
-              ..sort((a, b) => int.parse(a).compareTo(int.parse(b)));
-            final int columns = 3;
-            final int total = sortedNumbers.length;
-            final int rows = (total / columns).ceil();
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8.0),
-                  child: Center(
-                    child: Text(
-                      'Title ${entry.key}',
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.orange,
-                      ),
-                    ),
-                  ),
-                ),
-                const Divider(thickness: 2, color: Colors.orange),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    for (int row = 0; row < rows; row++)
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          for (int col = 0; col < columns; col++)
-                            if (row * columns + col < total)
-                              SizedBox(
-                                width: 100,
-                                child: Align(
-                                  alignment: Alignment.center,
-                                  child: _buildNumberTile(
-                                    sortedNumbers[row * columns + col],
-                                    row * columns + col,
-                                  ),
-                                ),
-                              )
-                            else
-                              const SizedBox(width: 100),
-                        ],
-                      ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-              ],
-            );
-          }).toList(),
-        ),
-      );
-    }
-
-    // For class C and D: show numbers in a centered 3-column grid
-    if (widget.gameClass == 'C' || widget.gameClass == 'D') {
-      final sortedNumbers = _numbers.toList()
-        ..sort((a, b) => int.parse(a).compareTo(int.parse(b)));
-      final int columns = 3;
-      final int total = sortedNumbers.length;
-      final int rows = (total / columns).ceil();
-      return SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            for (int row = 0; row < rows; row++)
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  for (int col = 0; col < columns; col++)
-                    if (row * columns + col < total)
-                      SizedBox(
-                        width: 100,
-                        child: Align(
-                          alignment: Alignment.center,
-                          child: _buildNumberTile(
-                            sortedNumbers[row * columns + col],
-                            row * columns + col,
-                          ),
-                        ),
-                      )
-                    else
-                      const SizedBox(width: 100),
-                ],
-              ),
-          ],
-        ),
-      );
-    }
-
-    return GridView.builder(
+    // For all classes: show numbers in a simple 3-column grid
+    final sortedNumbers = _numbers.toList()
+      ..sort((a, b) => int.parse(a).compareTo(int.parse(b)));
+    final int columns = 3;
+    final int total = sortedNumbers.length;
+    final int rows = (total / columns).ceil();
+    
+    return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,
-        childAspectRatio: 1.2,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          for (int row = 0; row < rows; row++)
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                for (int col = 0; col < columns; col++)
+                  if (row * columns + col < total)
+                    SizedBox(
+                      width: 100,
+                      child: Align(
+                        alignment: Alignment.center,
+                        child: _buildNumberTile(
+                          sortedNumbers[row * columns + col],
+                          row * columns + col,
+                        ),
+                      ),
+                    )
+                  else
+                    const SizedBox(width: 100),
+              ],
+            ),
+        ],
       ),
-      itemCount: _numbers.length,
-      itemBuilder: (context, index) {
-        return _buildNumberTile(_numbers[index], index);
-
-        // For class C and D: show numbers in a centered 3-column grid, last row centered
-      },
     );
   }
 

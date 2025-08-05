@@ -27,13 +27,14 @@ class GameResult {
     return GameResult(
       id: json['_id'] ?? json['id'] ?? '',
       gameClass: json['gameClass'] ?? '',
-      winningNumber: json['winningNumber']?.toString() ?? '',
-      resultDate: DateTime.parse(
+      winningNumber: (json['winningNumber'] ?? '').toString(),
+      resultDate: DateTime.tryParse(
         json['createdAt'] ??
             json['resultDate'] ??
+            json['resultDeclaredAt'] ??
             DateTime.now().toIso8601String(),
-      ),
-      roundId: json['roundId']?['_id'] ?? json['roundId'],
+      ) ?? DateTime.now(),
+      roundId: json['roundId'] is Map ? json['roundId']['_id'] : json['roundId'],
     );
   }
 }

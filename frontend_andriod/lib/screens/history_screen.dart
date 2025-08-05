@@ -34,14 +34,16 @@ class _HistoryScreenState extends State<HistoryScreen> {
         listen: false,
       ).userService;
       final response = await userService.getUserHistory();
-      final List<dynamic> data = response['data']['selections'] ?? [];
+      print('History response: $response'); // Debug log
+      final List<dynamic> data = response['data']['bets'] ?? [];
       setState(() {
         _history = data.map((e) => HistoryItem.fromJson(e)).toList();
         _isLoading = false;
       });
     } catch (e) {
+      print('History fetch error: $e'); // Debug log
       setState(() {
-        _error = 'Failed to load history';
+        _error = 'Failed to load history: $e';
         _isLoading = false;
       });
     }
@@ -105,41 +107,67 @@ class _HistoryScreenState extends State<HistoryScreen> {
                                     size: 28,
                                   ),
                                   const SizedBox(width: 10),
+                                  Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Class ${item.gameClass}',
+                                        style: const TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.black87,
+                                        ),
+                                      ),
+                                      Text(
+                                        item.timeSlot,
+                                        style: const TextStyle(
+                                          fontSize: 14,
+                                          color: Colors.black54,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 6,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: statusColor,
+                                      borderRadius: BorderRadius.circular(10),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: statusColor.withValues(alpha: 0.18),
+                                          blurRadius: 6,
+                                          offset: const Offset(0, 2),
+                                        ),
+                                      ],
+                                    ),
+                                    child: Text(
+                                      item.status,
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 14,
+                                        letterSpacing: 1.1,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
                                   Text(
-                                    item.timeSlot,
+                                    '₹${item.betAmount}',
                                     style: const TextStyle(
-                                      fontSize: 18,
+                                      fontSize: 16,
                                       fontWeight: FontWeight.bold,
                                       color: Colors.black87,
                                     ),
                                   ),
                                 ],
-                              ),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 6,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: statusColor,
-                                  borderRadius: BorderRadius.circular(10),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: statusColor.withValues(alpha: 0.18),
-                                      blurRadius: 6,
-                                      offset: const Offset(0, 2),
-                                    ),
-                                  ],
-                                ),
-                                child: Text(
-                                  item.status,
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 14,
-                                    letterSpacing: 1.1,
-                                  ),
-                                ),
                               ),
                             ],
                           ),

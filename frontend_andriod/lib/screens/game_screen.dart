@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
-import '../providers/game_provider.dart';
+import '../providers/game_provider_updated.dart';
 import '../widgets/custom_appbar.dart';
 import '../widgets/bet_dialog.dart';
 import '../utils/utils.dart';
@@ -306,10 +306,16 @@ class _GameScreenState extends State<GameScreen> {
 
   void _showBetDialog(String number) {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final gameProvider = Provider.of<GameProvider>(context, listen: false);
+    final gameProvider = Provider.of<GameProviderUpdated>(
+      context,
+      listen: false,
+    );
     final user = authProvider.currentUser;
 
     if (user == null) return;
+
+    // Debug: Print current balance
+    debugPrint('Current wallet balance before betting: ${user.walletBalance}');
 
     // Calculate time slot for current time
     final now = DateTime.now();
@@ -326,10 +332,14 @@ class _GameScreenState extends State<GameScreen> {
         walletBalance: user.walletBalance,
         timeSlot: timeSlotStr,
         onBetPlaced: (amount) async {
+          // Refresh balance one more time before placing bet
+          await authProvider.refreshWalletBalance();
+          debugPrint('Refreshed wallet balance: ${authProvider.currentUser?.walletBalance}');
+          
           final success = await gameProvider.placeBet(
             gameClass: widget.gameClass,
-            number: number,
-            amount: amount.toDouble(),
+            selectedNumber: number,
+            betAmount: amount.toInt(),
             authProvider: authProvider,
             timeSlot: timeSlotStr,
           );
@@ -339,6 +349,15 @@ class _GameScreenState extends State<GameScreen> {
               const SnackBar(
                 content: Text('Bet placed successfully!'),
                 backgroundColor: Colors.green,
+              ),
+            );
+          } else if (context.mounted) {
+            // Show error message from provider
+            final errorMessage = gameProvider.error ?? 'Failed to place bet';
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(errorMessage),
+                backgroundColor: Colors.red,
               ),
             );
           }

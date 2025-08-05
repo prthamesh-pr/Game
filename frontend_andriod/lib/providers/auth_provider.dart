@@ -186,17 +186,17 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
-  // Update wallet balance locally (for guest mode or testing)
-  Future<bool> updateWalletBalance(double amount) async {
+  // Update wallet balance with the new balance from backend
+  Future<bool> updateWalletBalance(double newBalance) async {
     try {
       if (!_isLoggedIn || _currentUser == null) return false;
 
-      // Update local balance
+      // Set the new balance directly
       _currentUser = User(
         id: _currentUser!.id,
         username: _currentUser!.username,
         email: _currentUser!.email,
-        walletBalance: _currentUser!.walletBalance + amount,
+        walletBalance: newBalance,
         isGuest: _currentUser!.isGuest,
       );
 

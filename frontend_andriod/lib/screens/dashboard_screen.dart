@@ -5,7 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../constants/colors.dart';
 import '../providers/auth_provider.dart';
-import '../providers/game_provider.dart';
+import '../providers/game_provider_updated.dart';
 import '../widgets/custom_appbar.dart';
 import '../widgets/app_drawer.dart';
 import '../widgets/loading_shimmer.dart';
@@ -39,8 +39,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
     // Refresh data every 60 seconds
     _refreshTimer = Timer.periodic(const Duration(seconds: 60), (_) {
       if (mounted) {
-        final gameProvider = Provider.of<GameProvider>(context, listen: false);
-        gameProvider.loadGameData();
+        final gameProvider = Provider.of<GameProviderUpdated>(
+          context,
+          listen: false,
+        );
+        gameProvider.loadUserBets();
       }
     });
   }
@@ -56,9 +59,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
       _isLoading = true;
     });
 
-    // Use the GameProvider to load actual data
-    final gameProvider = Provider.of<GameProvider>(context, listen: false);
-    await gameProvider.loadGameData();
+    // Use the GameProviderUpdated to load actual data
+    final gameProvider = Provider.of<GameProviderUpdated>(
+      context,
+      listen: false,
+    );
+    await gameProvider.loadUserBets();
 
     if (mounted) {
       setState(() {
@@ -265,7 +271,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final screenWidth = MediaQuery.of(context).size.width;
     final isTablet = screenWidth > 600;
 
-    final gameProvider = Provider.of<GameProvider>(context);
     // D, C, B, A order
     final classOrder = ['D', 'C', 'B', 'A'];
     final classDescriptions = {
@@ -298,51 +303,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
         const SizedBox(height: 15),
         Column(
           children: classOrder.map((classType) {
-            return FutureBuilder<List<String>>(
-              future: gameProvider.getValidNumbers(classType),
-              builder: (context, snapshot) {
-                final numbers = (snapshot.data ?? []).toList()
-                  ..sort((a, b) => int.parse(a).compareTo(int.parse(b)));
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildGameClassCard(
-                      classType,
-                      classDescriptions[classType]!,
-                      classColors[classType]!,
-                      context,
-                    ),
-                    if (numbers.isNotEmpty)
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 8.0),
-                        child: (classType == 'D' || classType == 'C')
-                            ? Wrap(
-                                spacing: 8,
-                                children: numbers
-                                    .map((number) => Chip(label: Text(number)))
-                                    .toList(),
-                              )
-                            : Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: numbers
-                                    .map(
-                                      (number) => Padding(
-                                        padding: const EdgeInsets.symmetric(
-                                          vertical: 2.0,
-                                        ),
-                                        child: Text(
-                                          number,
-                                          style: TextStyle(fontSize: 16),
-                                        ),
-                                      ),
-                                    )
-                                    .toList(),
-                              ),
-                      ),
-                    const SizedBox(height: 12),
-                  ],
-                );
-              },
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildGameClassCard(
+                  classType,
+                  classDescriptions[classType]!,
+                  classColors[classType]!,
+                  context,
+                ),
+                const SizedBox(height: 12),
+              ],
             );
           }).toList(),
         ),
@@ -445,7 +416,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildRecentResultsSection(BuildContext context) {
-    final gameProvider = Provider.of<GameProvider>(context);
+    final gameProvider = Provider.of<GameProviderUpdated>(context);
     final results = gameProvider.gameResults;
     final screenWidth = MediaQuery.of(context).size.width;
     final isTablet = screenWidth > 600;

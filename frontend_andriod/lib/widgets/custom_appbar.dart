@@ -212,17 +212,11 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   // Show dialog to add tokens
   void _showAddTokensDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => const AddTokenDialog(),
-    );
+    showDialog(context: context, builder: (context) => const AddTokenDialog());
   }
 
   // Show dialog to withdraw tokens
   void _showWithdrawDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => const WithdrawDialog(),
-    );
+    showDialog(context: context, builder: (context) => const WithdrawDialog());
   }
 }

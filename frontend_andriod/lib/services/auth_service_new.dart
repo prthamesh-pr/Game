@@ -1,8 +1,10 @@
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../constants/api_constants.dart';
 import '../models/user_model.dart';
+import '../utils/exceptions.dart';
 import '../utils/utils.dart';
 import 'api_service.dart';
 
@@ -24,7 +26,7 @@ class AuthService {
 
       // Check if response indicates success
       if (response['success'] != true) {
-        throw Exception(response['message'] ?? 'Login failed');
+        throw AuthException(response['message'] ?? 'Login failed');
       }
 
       // Save auth tokens
@@ -43,8 +45,8 @@ class AuthService {
       final user = User.fromJson(userJson);
 
       // Save user data
-      await prefs.setString(ApiConstants.userIdKey, user.id ?? '');
-      await prefs.setString(ApiConstants.usernameKey, user.username ?? '');
+      await prefs.setString(ApiConstants.userIdKey, user.id);
+      await prefs.setString(ApiConstants.usernameKey, user.username);
 
       Utils.showToast('Login successful');
       return user;
@@ -87,7 +89,7 @@ class AuthService {
 
       // Check if response indicates success
       if (response['success'] != true) {
-        throw Exception(response['message'] ?? 'Registration failed');
+        throw AuthException(response['message'] ?? 'Registration failed');
       }
 
       // Save auth tokens if provided

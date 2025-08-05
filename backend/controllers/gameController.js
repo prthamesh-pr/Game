@@ -98,6 +98,15 @@ const placeBet = async (req, res) => {
       });
     }
 
+    // Ensure betAmount is a number
+    const betAmountNum = Number(betAmount);
+    if (isNaN(betAmountNum) || betAmountNum <= 0) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Bet amount must be a valid number greater than 0' 
+      });
+    }
+
     // Validate game class
     if (!['A', 'B', 'C', 'D'].includes(gameClass)) {
       return res.status(400).json({ 
@@ -115,7 +124,7 @@ const placeBet = async (req, res) => {
     }
 
     // Validate bet amount
-    if (betAmount <= 0) {
+    if (betAmountNum <= 0) {
       return res.status(400).json({ 
         success: false, 
         message: 'Bet amount must be greater than 0' 
@@ -131,10 +140,20 @@ const placeBet = async (req, res) => {
       });
     }
 
-    if (user.walletBalance < betAmount) {
+    console.log(`User ${userId} balance check:`);
+    console.log(`- walletBalance: ${user.walletBalance}`);
+    console.log(`- wallet: ${user.wallet}`);
+    console.log(`- betAmount: ${betAmountNum}`);
+    console.log(`- betAmount type: ${typeof betAmountNum}`);
+
+    const currentBalance = user.walletBalance || user.wallet || 0;
+    console.log(`- currentBalance: ${currentBalance}`);
+    console.log(`- comparison: ${currentBalance} < ${betAmountNum} = ${currentBalance < betAmountNum}`);
+
+    if (currentBalance < betAmountNum) {
       return res.status(400).json({ 
         success: false, 
-        message: 'Insufficient balance' 
+        message: `Insufficient balance. Available: ${currentBalance}, Required: ${betAmountNum}` 
       });
     }
 
@@ -158,7 +177,7 @@ const placeBet = async (req, res) => {
       roundId: currentRound._id,
       gameClass,
       selectedNumber,
-      betAmount,
+      betAmount: betAmountNum,
       timeSlot: timeSlot || new Date().toISOString(),
       status: 'pending'
     });
@@ -166,14 +185,20 @@ const placeBet = async (req, res) => {
     await bet.save();
 
     // Deduct amount from wallet
-    user.walletBalance -= betAmount;
+    const previousBalance = user.walletBalance || user.wallet || 0;
+    user.walletBalance = previousBalance - betAmountNum;
+    
+    // Also update wallet field for backward compatibility
+    user.wallet = user.walletBalance;
+    
+    console.log(`Balance updated: ${previousBalance} - ${betAmountNum} = ${user.walletBalance}`);
     await user.save();
 
     // Create transaction record
     const transaction = new Transaction({
       userId,
       type: 'bet_placed',
-      amount: -betAmount,
+      amount: -betAmountNum,
       status: 'completed',
       description: `Bet placed on ${gameClass}-${selectedNumber}`
     });

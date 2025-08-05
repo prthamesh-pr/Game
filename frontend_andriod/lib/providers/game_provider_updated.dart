@@ -3,6 +3,7 @@ import '../models/bet_model.dart';
 import '../models/game_result_model.dart';
 import '../services/api_service.dart';
 import '../providers/auth_provider.dart';
+import '../constants/api_constants.dart';
 
 class GameProviderUpdated with ChangeNotifier {
   final ApiService _apiService = ApiService();
@@ -22,7 +23,7 @@ class GameProviderUpdated with ChangeNotifier {
   // Get game numbers for a specific class
   Future<List<String>> getGameNumbers(String gameClass) async {
     try {
-      final response = await _apiService.get('/game/numbers/$gameClass');
+      final response = await _apiService.get('${ApiConstants.gameNumbersEndpoint}/$gameClass');
       if (response['success']) {
         return List<String>.from(response['data']['numbers']);
       } else {
@@ -47,16 +48,41 @@ class GameProviderUpdated with ChangeNotifier {
     notifyListeners();
 
     try {
-      final response = await _apiService.post('/game/bet', {
+      // Get fresh wallet balance directly from wallet endpoint
+      final balanceResponse = await _apiService.get(ApiConstants.walletBalanceEndpoint);
+      debugPrint('Fresh balance response: $balanceResponse');
+      
+      double currentBalance = 0.0;
+      if (balanceResponse['success'] && balanceResponse['data'] != null) {
+        currentBalance = (balanceResponse['data']['walletBalance'] ?? 0.0).toDouble();
+        // Update auth provider with fresh balance
+        authProvider.updateWalletBalance(currentBalance);
+      }
+      
+      debugPrint('Placing bet - Class: $gameClass, Number: $selectedNumber, Amount: $betAmount, Fresh Balance: $currentBalance');
+      
+      // Check balance on frontend side as well
+      if (currentBalance < betAmount) {
+        _error = 'Insufficient balance. Available: ${currentBalance.toStringAsFixed(2)}, Required: ${betAmount.toStringAsFixed(2)}';
+        _isLoading = false;
+        notifyListeners();
+        return false;
+      }
+      
+      final response = await _apiService.post(ApiConstants.placeBetEndpoint, {
         'gameClass': gameClass,
         'selectedNumber': selectedNumber,
         'betAmount': betAmount,
         'timeSlot': timeSlot,
       });
 
+      debugPrint('Bet response: $response');
+
       if (response['success']) {
-        // Update user's wallet balance in auth provider
-        authProvider.updateWalletBalance(response['data']['newWalletBalance']);
+        // Update user's wallet balance in auth provider with new balance from backend
+        if (response['data']['newWalletBalance'] != null) {
+          authProvider.updateWalletBalance(response['data']['newWalletBalance'].toDouble());
+        }
 
         // Reload user bets
         await loadUserBets();
@@ -66,6 +92,7 @@ class GameProviderUpdated with ChangeNotifier {
         return true;
       } else {
         _error = response['message'];
+        debugPrint('Bet failed: ${response['message']}');
         _isLoading = false;
         notifyListeners();
         return false;
@@ -97,7 +124,7 @@ class GameProviderUpdated with ChangeNotifier {
       if (status != null) queryParams['status'] = status;
 
       final response = await _apiService.get(
-        '/game/bets',
+        ApiConstants.userBetsEndpoint,
         queryParams: queryParams,
       );
 
@@ -130,7 +157,7 @@ class GameProviderUpdated with ChangeNotifier {
       if (gameClass != null) queryParams['gameClass'] = gameClass;
 
       final response = await _apiService.get(
-        '/game/results',
+        ApiConstants.resultsEndpoint,
         queryParams: queryParams,
       );
 

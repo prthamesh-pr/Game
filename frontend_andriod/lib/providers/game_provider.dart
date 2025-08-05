@@ -179,10 +179,7 @@ class GameProvider with ChangeNotifier {
     int limit = 10,
   }) async {
     try {
-      final response = await _gameService.getResults(
-        page: page,
-        limit: limit,
-      );
+      final response = await _gameService.getResults(page: page, limit: limit);
       return response;
     } catch (e) {
       debugPrint('Get all rounds error: $e');
@@ -269,17 +266,23 @@ class GameProvider with ChangeNotifier {
 
       if (response['success'] == true) {
         // Update user's wallet balance if returned
-        if (response['data'] != null && response['data']['newWalletBalance'] != null) {
-          await authProvider.updateWalletBalance(response['data']['newWalletBalance']);
+        if (response['data'] != null &&
+            response['data']['newWalletBalance'] != null) {
+          await authProvider.updateWalletBalance(
+            response['data']['newWalletBalance'],
+          );
         }
 
         // Reload game data to reflect the new bet
         await loadGameData();
-        
+
         Utils.showToast('Bet placed successfully');
         return true;
       } else {
-        Utils.showToast(response['message'] ?? 'Failed to place bet', isError: true);
+        Utils.showToast(
+          response['message'] ?? 'Failed to place bet',
+          isError: true,
+        );
         return false;
       }
     } catch (e) {

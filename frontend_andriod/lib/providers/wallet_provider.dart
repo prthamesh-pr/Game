@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
+import '../constants/api_constants.dart';
 
 class WalletProvider with ChangeNotifier {
   final ApiService _apiService = ApiService();
@@ -26,7 +27,7 @@ class WalletProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      final response = await _apiService.post('/wallet/add-token', {
+      final response = await _apiService.post(ApiConstants.addBalanceEndpoint, {
         'amount': amount,
         'paymentApp': paymentApp,
         'upiId': upiId,
@@ -64,7 +65,7 @@ class WalletProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      final response = await _apiService.post('/wallet/withdraw', {
+      final response = await _apiService.post(ApiConstants.withdrawEndpoint, {
         'amount': amount,
         'phoneNumber': phoneNumber,
         'paymentApp': paymentApp,
@@ -93,7 +94,9 @@ class WalletProvider with ChangeNotifier {
   // Get wallet balance
   Future<Map<String, dynamic>?> getWalletBalance() async {
     try {
-      final response = await _apiService.get('/wallet/balance');
+      final response = await _apiService.get(
+        ApiConstants.walletBalanceEndpoint,
+      );
 
       if (response['success']) {
         return response['data'];
@@ -122,7 +125,7 @@ class WalletProvider with ChangeNotifier {
       if (type != null) queryParams['type'] = type;
 
       final response = await _apiService.get(
-        '/wallet/transactions',
+        ApiConstants.walletTransactionsEndpoint,
         queryParams: queryParams,
       );
 
@@ -153,7 +156,7 @@ class WalletProvider with ChangeNotifier {
       if (status != null) queryParams['status'] = status;
 
       final response = await _apiService.get(
-        '/wallet/withdrawals',
+        ApiConstants.withdrawalHistoryEndpoint,
         queryParams: queryParams,
       );
 

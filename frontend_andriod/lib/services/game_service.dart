@@ -61,15 +61,12 @@ class GameService {
     String? timeSlot,
   }) async {
     try {
-      final response = await _apiService.post(
-        ApiConstants.placeBetEndpoint,
-        {
-          'gameClass': gameClass,
-          'selectedNumber': selectedNumber,
-          'betAmount': betAmount,
-          if (timeSlot != null) 'timeSlot': timeSlot,
-        },
-      );
+      final response = await _apiService.post(ApiConstants.placeBetEndpoint, {
+        'gameClass': gameClass,
+        'selectedNumber': selectedNumber,
+        'betAmount': betAmount,
+        if (timeSlot != null) 'timeSlot': timeSlot,
+      });
 
       Utils.showToast('Bet placed successfully');
       return response;

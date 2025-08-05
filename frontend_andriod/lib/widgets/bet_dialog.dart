@@ -70,7 +70,7 @@ class _BetDialogState extends State<BetDialog> {
 
     if (amount > widget.walletBalance) {
       setState(() {
-        _errorText = 'Insufficient tokens';
+        _errorText = 'Insufficient tokens. Available: ${widget.walletBalance.toStringAsFixed(0)}, Required: ${amount.toStringAsFixed(0)}';
       });
       return;
     }

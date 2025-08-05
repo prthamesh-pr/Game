@@ -12,31 +12,32 @@ class ApiConstants {
   static const String verifyTokenEndpoint = '/auth/verify';
 
   // Game endpoints
-  static const String gameNumbersEndpoint = '/numbers';
-  static const String currentRoundEndpoint = '/current-round';
-  static const String placeBetEndpoint = '/bet';
-  static const String cancelBetEndpoint = '/bet/cancel';
-  static const String userBetsEndpoint = '/bets';
-  static const String resultsEndpoint = '/results';
+  static const String gameNumbersEndpoint = '/game/numbers';
+  static const String currentRoundEndpoint = '/game/current-round';
+  static const String placeBetEndpoint = '/game/bet';
+  static const String cancelBetEndpoint = '/game/bet/cancel';
+  static const String userBetsEndpoint = '/game/bets';
+  static const String resultsEndpoint = '/game/results';
 
-  // User Profile endpoints  
+  // User Profile endpoints
   static const String userProfileEndpoint = '/user/profile';
-  static const String updateProfileEndpoint = '/user/update';
+  static const String updateProfileEndpoint = '/user/profile';
   static const String changePasswordEndpoint = '/user/change-password';
 
   // Wallet endpoints
-  static const String walletBalanceEndpoint = '/balance';
-  static const String walletTransactionsEndpoint = '/transactions';
-  static const String addBalanceEndpoint = '/wallet/add';
+  static const String walletBalanceEndpoint = '/wallet/balance';
+  static const String walletTransactionsEndpoint = '/wallet/transactions';
+  static const String addBalanceEndpoint = '/wallet/add-token';
   static const String withdrawEndpoint = '/wallet/withdraw';
 
-  // QR Code endpoints
-  static const String qrCodeGenerateEndpoint = '/qr/generate';
-  static const String qrCodeListEndpoint = '/qr/list';
+  // User specific endpoints
+  static const String userSelectionsEndpoint = '/user/selections';
+  static const String userResultsEndpoint = '/user/results';
+  static const String userStatsEndpoint = '/user/stats';
 
   // Transaction history endpoints
-  static const String transactionHistoryEndpoint = '/transactions/history';
-  static const String betHistoryEndpoint = '/bets/history';
+  static const String transactionHistoryEndpoint = '/transactions';
+  static const String withdrawalHistoryEndpoint = '/withdrawals';
 
   // Settings endpoints
   static const String settingsEndpoint = '/settings';

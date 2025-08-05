@@ -14,7 +14,9 @@ class WalletService {
   // Get wallet balance
   Future<Map<String, dynamic>> getWalletBalance() async {
     try {
-      final response = await _apiService.get(ApiConstants.walletBalanceEndpoint);
+      final response = await _apiService.get(
+        ApiConstants.walletBalanceEndpoint,
+      );
       return response;
     } catch (e) {
       debugPrint('Get wallet balance error: $e');
@@ -38,28 +40,6 @@ class WalletService {
     }
   }
 
-  // Generate QR code for payments
-  Future<Map<String, dynamic>> generateQRCode({
-    required double amount,
-    required String paymentApp,
-    required String upiId,
-  }) async {
-    try {
-      final response = await _apiService.post(
-        ApiConstants.qrCodeGenerateEndpoint,
-        {
-          'amount': amount,
-          'paymentApp': paymentApp,
-          'upiId': upiId,
-        },
-      );
-      return response;
-    } catch (e) {
-      debugPrint('Generate QR code error: $e');
-      rethrow;
-    }
-  }
-
   // Request Add Balance (Token)
   Future<Map<String, dynamic>> requestAddBalance({
     required double amount,
@@ -71,18 +51,15 @@ class WalletService {
     String? transactionId,
   }) async {
     try {
-      final response = await _apiService.post(
-        ApiConstants.addBalanceEndpoint,
-        {
-          'amount': amount,
-          'upiId': upiId,
-          'userName': userName,
-          'paymentApp': paymentApp,
-          'referralNumber': referralNumber,
-          'phoneNumber': phoneNumber,
-          if (transactionId != null) 'transactionId': transactionId,
-        },
-      );
+      final response = await _apiService.post(ApiConstants.addBalanceEndpoint, {
+        'amount': amount,
+        'upiId': upiId,
+        'userName': userName,
+        'paymentApp': paymentApp,
+        'referralNumber': referralNumber,
+        'phoneNumber': phoneNumber,
+        if (transactionId != null) 'transactionId': transactionId,
+      });
 
       Utils.showToast('Add balance request submitted successfully');
       return response;
@@ -102,16 +79,13 @@ class WalletService {
     String? upiId,
   }) async {
     try {
-      final response = await _apiService.post(
-        ApiConstants.withdrawEndpoint,
-        {
-          'amount': amount,
-          'phoneNumber': phoneNumber,
-          'paymentApp': paymentApp,
-          'referralNumber': referralNumber,
-          if (upiId != null) 'upiId': upiId,
-        },
-      );
+      final response = await _apiService.post(ApiConstants.withdrawEndpoint, {
+        'amount': amount,
+        'phoneNumber': phoneNumber,
+        'paymentApp': paymentApp,
+        'referralNumber': referralNumber,
+        if (upiId != null) 'upiId': upiId,
+      });
 
       Utils.showToast('Withdraw request submitted successfully');
       return response;
@@ -119,23 +93,6 @@ class WalletService {
       debugPrint('Withdraw request error: $e');
       Utils.showToast('Failed to submit withdraw request', isError: true);
       rethrow;
-    }
-  }
-
-  // Fetch QR Code URL (for backward compatibility)
-  Future<String?> fetchQrCodeUrl() async {
-    try {
-      final response = await getQRCodeList();
-      if (response['success'] == true && response['qrCodes'] != null) {
-        final qrCodes = response['qrCodes'] as List;
-        if (qrCodes.isNotEmpty) {
-          return qrCodes.first['qrUrl'] ?? qrCodes.first['imageUrl'];
-        }
-      }
-      return null;
-    } catch (e) {
-      debugPrint('Fetch QR URL error: $e');
-      return null;
     }
   }
 
@@ -155,16 +112,5 @@ class WalletService {
       referralNumber: referralNumber,
       phoneNumber: phoneNumber,
     );
-  }
-
-  // Get QR code list
-  Future<Map<String, dynamic>> getQRCodeList() async {
-    try {
-      final response = await _apiService.get(ApiConstants.qrCodeListEndpoint);
-      return response;
-    } catch (e) {
-      debugPrint('Get QR code list error: $e');
-      rethrow;
-    }
   }
 }

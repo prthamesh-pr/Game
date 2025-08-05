@@ -29,7 +29,9 @@ class GameResult {
       gameClass: json['gameClass'] ?? '',
       winningNumber: json['winningNumber']?.toString() ?? '',
       resultDate: DateTime.parse(
-        json['createdAt'] ?? json['resultDate'] ?? DateTime.now().toIso8601String(),
+        json['createdAt'] ??
+            json['resultDate'] ??
+            DateTime.now().toIso8601String(),
       ),
       roundId: json['roundId']?['_id'] ?? json['roundId'],
     );

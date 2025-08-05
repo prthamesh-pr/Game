@@ -17,7 +17,7 @@ class HistoryItem {
     return HistoryItem(
       id: json['_id'] ?? '',
       selectedNumber: json['number'] ?? '',
-      resultNumber: json['roundInfo']?['winningNumbers']?['classA'] ?? null,
+      resultNumber: json['roundInfo']?['winningNumbers']?['classA'],
       status: json['status'] == 'win'
           ? 'WIN'
           : json['status'] == 'loss'

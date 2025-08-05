@@ -8,7 +8,7 @@ class BetDialog extends StatefulWidget {
   final String selectedNumber;
   final String gameClass;
   final double walletBalance;
-  final Future<void> Function(double) onBetPlaced;
+  final Future<void> Function(int) onBetPlaced;
   final String? timeSlot;
 
   const BetDialog({
@@ -211,7 +211,7 @@ class _BetDialogState extends State<BetDialog> {
                               final amount = double.parse(
                                 _amountController.text,
                               );
-                              await widget.onBetPlaced(amount);
+                              await widget.onBetPlaced(amount.toInt());
 
                               if (mounted) {
                                 Navigator.pop(context);

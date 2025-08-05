@@ -1,5 +1,9 @@
+const WithdrawalRequest = require('../models/WithdrawalRequest');
+const User = require('../models/User');
+const Transaction = require('../models/Transaction');
+
 // Get all withdrawal requests
-exports.getAllWithdrawals = async (req, res) => {
+const getAllWithdrawals = async (req, res) => {
   try {
     const requests = await WithdrawalRequest.find().populate('userId', 'username walletBalance');
     res.json({ success: true, data: requests });
@@ -8,161 +12,217 @@ exports.getAllWithdrawals = async (req, res) => {
   }
 };
 
-// Approve withdrawal request
-exports.approveWithdrawal = async (req, res) => {
+// Get a single withdrawal request by ID
+const getWithdrawalById = async (req, res) => {
   try {
-    const requestId = req.params.id;
-    const adminId = req.user.id;
-    const request = await WithdrawalRequest.findById(requestId);
-    if (!request || request.status !== 'pending') {
-      return res.status(404).json({ success: false, message: 'Request not found or already processed' });
+    const request = await WithdrawalRequest.findById(req.params.id).populate('userId', 'username walletBalance');
+    if (!request) {
+      return res.status(404).json({ success: false, message: 'Withdrawal request not found' });
     }
-    request.status = 'approved';
-    request.adminId = adminId;
-    request.processedAt = new Date();
-    await request.save();
-    res.json({ success: true, message: 'Withdrawal approved', data: request });
+    res.json({ success: true, data: request });
   } catch (err) {
-    res.status(500).json({ success: false, message: 'Error approving withdrawal request' });
+    res.status(500).json({ success: false, message: 'Error fetching withdrawal request' });
   }
 };
 
-// Reject withdrawal request
-exports.rejectWithdrawal = async (req, res) => {
+// Create a new withdrawal request
+const createWithdrawal = async (req, res) => {
   try {
-    const requestId = req.params.id;
-    const adminId = req.user.id;
-    const request = await WithdrawalRequest.findById(requestId);
-    if (!request || request.status !== 'pending') {
-      return res.status(404).json({ success: false, message: 'Request not found or already processed' });
-    }
-    request.status = 'rejected';
-    request.adminId = adminId;
-    request.processedAt = new Date();
-    await request.save();
-    // Refund user
-    const user = await User.findById(request.userId);
-    user.walletBalance += request.amount;
-    await user.save();
-    res.json({ success: true, message: 'Withdrawal rejected', data: request });
-  } catch (err) {
-    res.status(500).json({ success: false, message: 'Error rejecting withdrawal request' });
-  }
-};
-exports.filterWithdrawals = (req, res) => {
-  // TODO: Filter withdrawal requests by user, status, date range
-  const { userId, status, startDate, endDate } = req.query;
-  res.json({ message: 'Filter withdrawal requests', filters: { userId, status, startDate, endDate } });
-};
-exports.exportWithdrawals = (req, res) => {
-  // TODO: Export withdrawal requests as CSV/Excel
-  res.json({ message: 'Export withdrawal requests (CSV/Excel)' });
-};
-exports.getWithdrawalTransactionDetails = (req, res) => {
-  // TODO: Fetch transaction details for a withdrawal request
-  res.json({ message: 'Get withdrawal transaction details', id: req.params.id });
-};
-exports.getPendingWithdrawals = (req, res) => {
-  // TODO: Fetch all pending withdrawal requests
-  res.json({ message: 'Get all pending withdrawal requests' });
-};
-
-exports.processWithdrawal = (req, res) => {
-  // TODO: Approve or reject withdrawal request with reason
-  const { id, action, reason } = req.body;
-  res.json({ message: `Withdrawal ${action}`, id, reason });
-};
-const WithdrawalRequest = require('../models/WithdrawalRequest');
-const User = require('../models/User');
-
-// User creates withdrawal request
-
-exports.createWithdrawal = async (req, res) => {
-  try {
-    const { amount, phoneNumber, paymentApp, upiId, userName } = req.body;
+    const { amount, phoneNumber, paymentApp = 'GooglePay' } = req.body;
     const userId = req.user.id;
+
+    // Validate amount
+    if (!amount || amount <= 0) {
+      return res.status(400).json({ success: false, message: 'Invalid amount' });
+    }
+
+    // Check if user has sufficient balance
     const user = await User.findById(userId);
-    if (!user || user.walletBalance < amount) {
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    if (user.walletBalance < amount) {
       return res.status(400).json({ success: false, message: 'Insufficient balance' });
     }
-    const withdrawal = new WithdrawalRequest({
+
+    // Create withdrawal request
+    const withdrawalRequest = new WithdrawalRequest({
       userId,
       amount,
       phoneNumber,
       paymentApp,
-      upiId,
-      userName
+      status: 'pending'
     });
-    user.walletBalance -= amount;
-    await user.save();
-    await withdrawal.save();
-    res.json({ success: true, message: 'Withdrawal request submitted', data: withdrawal });
+
+    await withdrawalRequest.save();
+
+    // Create a transaction record
+    const transaction = new Transaction({
+      userId,
+      type: 'withdraw',
+      amount: -amount,
+      status: 'pending',
+      description: `Withdrawal request for ${amount} tokens`,
+      phoneNumber,
+      paymentApp
+    });
+
+    await transaction.save();
+
+    res.status(201).json({ 
+      success: true, 
+      message: 'Withdrawal request created successfully',
+      data: withdrawalRequest
+    });
   } catch (err) {
     res.status(500).json({ success: false, message: 'Error creating withdrawal request' });
   }
 };
 
-exports.getWithdrawalById = (req, res) => {
-  // TODO: Fetch a single withdrawal request by ID
-  res.json({ message: 'Get withdrawal request by ID', id: req.params.id });
+// Process withdrawal (approve/reject)
+const processWithdrawal = async (req, res) => {
+  try {
+    const { requestId, action, reason } = req.body;
+    const adminId = req.user.id;
+
+    const request = await WithdrawalRequest.findById(requestId);
+    if (!request) {
+      return res.status(404).json({ success: false, message: 'Withdrawal request not found' });
+    }
+
+    if (request.status !== 'pending') {
+      return res.status(400).json({ success: false, message: 'Request already processed' });
+    }
+
+    if (action === 'approve') {
+      // Deduct balance from user
+      const user = await User.findById(request.userId);
+      if (user.walletBalance < request.amount) {
+        return res.status(400).json({ success: false, message: 'Insufficient user balance' });
+      }
+
+      user.walletBalance -= request.amount;
+      await user.save();
+
+      const transaction = new Transaction({
+        userId: request.userId,
+        type: 'withdraw',
+        amount: -request.amount,
+        status: 'completed',
+        description: `Withdrawal approved: ${request.amount} tokens`,
+        processedBy: adminId,
+        phoneNumber: request.phoneNumber,
+        paymentApp: request.paymentApp
+      });
+
+      await transaction.save();
+
+      request.status = 'approved';
+      request.processedBy = adminId;
+      request.processedAt = new Date();
+      request.reason = reason;
+
+      await request.save();
+
+      res.json({ 
+        success: true, 
+        message: 'Withdrawal approved successfully',
+        data: request
+      });
+    } else if (action === 'reject') {
+      request.status = 'rejected';
+      request.processedBy = adminId;
+      request.processedAt = new Date();
+      request.reason = reason;
+
+      await request.save();
+
+      res.json({ 
+        success: true, 
+        message: 'Withdrawal rejected',
+        data: request
+      });
+    } else {
+      res.status(400).json({ success: false, message: 'Invalid action' });
+    }
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Error processing withdrawal request' });
+  }
 };
 
-// Admin views all pending withdrawal requests
-exports.getPendingWithdrawals = async (req, res) => {
+// Filter withdrawal requests
+const filterWithdrawals = async (req, res) => {
   try {
-    const requests = await WithdrawalRequest.find({ status: 'pending' }).populate('userId', 'username walletBalance');
+    const { status, userId, startDate, endDate } = req.query;
+    const query = {};
+
+    if (status) query.status = status;
+    if (userId) query.userId = userId;
+    if (startDate || endDate) {
+      query.createdAt = {};
+      if (startDate) query.createdAt.$gte = new Date(startDate);
+      if (endDate) query.createdAt.$lte = new Date(endDate);
+    }
+
+    const requests = await WithdrawalRequest.find(query)
+      .populate('userId', 'username walletBalance')
+      .sort({ createdAt: -1 });
+
     res.json({ success: true, data: requests });
   } catch (err) {
-    res.status(500).json({ success: false, message: 'Error fetching withdrawal requests' });
+    res.status(500).json({ success: false, message: 'Error filtering withdrawal requests' });
   }
 };
 
-// Admin approves/rejects withdrawal
-exports.processWithdrawal = async (req, res) => {
+// Export withdrawals
+const exportWithdrawals = async (req, res) => {
   try {
-    const { requestId, action, reason } = req.body; // action: 'approve' or 'reject'
-    const adminId = req.user.id;
-    if (!['approve', 'reject'].includes(action)) {
-      return res.status(400).json({ success: false, message: 'Invalid action' });
-    }
-    const request = await WithdrawalRequest.findById(requestId);
-    if (!request || request.status !== 'pending') {
-      return res.status(404).json({ success: false, message: 'Request not found or already processed' });
-    }
-    request.status = action === 'approve' ? 'approved' : 'rejected';
-    request.adminId = adminId;
-    request.processedAt = new Date();
-    if (action === 'reject') {
-      request.rejectReason = reason || 'No reason provided';
-      // Refund user
-      const user = await User.findById(request.userId);
-      if (user) {
-        user.walletBalance += request.amount;
-        await user.save();
-      }
-    }
-    await request.save();
-    // Audit log (if available)
-    try {
-      const AuditLog = require('../models/AuditLog');
-      await AuditLog.create({
-        action: `withdrawal_${action}`,
-        performedBy: adminId,
-        targetId: requestId,
-        details: { reason: action === 'reject' ? request.rejectReason : undefined }
-      });
-    } catch (e) {}
-    // Notify user (if notification system available)
-    try {
-      const Notification = require('../models/Notification');
-      await Notification.create({
-        userId: request.userId,
-        title: `Withdrawal ${action === 'approve' ? 'Approved' : 'Rejected'}`,
-        message: action === 'approve' ? 'Your withdrawal request has been approved.' : `Your withdrawal request was rejected. Reason: ${request.rejectReason}`
-      });
-    } catch (e) {}
-    res.json({ success: true, message: `Withdrawal ${action}d`, data: request });
+    const requests = await WithdrawalRequest.find()
+      .populate('userId', 'username walletBalance')
+      .sort({ createdAt: -1 });
+
+    res.json({ success: true, data: requests, message: 'Export data ready' });
   } catch (err) {
-    res.status(500).json({ success: false, message: 'Error processing withdrawal request', error: err.message });
+    res.status(500).json({ success: false, message: 'Error exporting withdrawal requests' });
   }
+};
+
+// Get withdrawal transaction details
+const getWithdrawalTransactionDetails = async (req, res) => {
+  try {
+    const request = await WithdrawalRequest.findById(req.params.id)
+      .populate('userId', 'username walletBalance');
+    
+    if (!request) {
+      return res.status(404).json({ success: false, message: 'Withdrawal request not found' });
+    }
+
+    const transaction = await Transaction.findOne({
+      userId: request.userId,
+      type: 'withdraw',
+      amount: -request.amount,
+      phoneNumber: request.phoneNumber
+    });
+
+    res.json({
+      success: true,
+      data: {
+        withdrawal: request,
+        transaction
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Error fetching withdrawal transaction details' });
+  }
+};
+
+module.exports = {
+  getAllWithdrawals,
+  getWithdrawalById,
+  createWithdrawal,
+  processWithdrawal,
+  filterWithdrawals,
+  exportWithdrawals,
+  getWithdrawalTransactionDetails
 };

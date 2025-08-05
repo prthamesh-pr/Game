@@ -83,7 +83,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                   child: Container(
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
-                        colors: [statusColor.withOpacity(0.12), Colors.white],
+                        colors: [statusColor.withValues(alpha: 0.12), Colors.white],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
@@ -125,7 +125,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                                   borderRadius: BorderRadius.circular(10),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: statusColor.withOpacity(0.18),
+                                      color: statusColor.withValues(alpha: 0.18),
                                       blurRadius: 6,
                                       offset: const Offset(0, 2),
                                     ),

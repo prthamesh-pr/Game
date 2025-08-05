@@ -20,6 +20,8 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
   final _mobileController = TextEditingController();
   final _referralController = TextEditingController();
   bool _isLoading = false;
+  final _currentPasswordController = TextEditingController();
+  final _newPasswordController = TextEditingController();
 
   @override
   void initState() {
@@ -32,8 +34,8 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
     if (user != null) {
       _usernameController.text = user.username ?? '';
       _emailController.text = user.email ?? '';
-      _mobileController.text = user.mobileNumber?.toString() ?? '';
-      _referralController.text = user.referral?.toString() ?? '';
+      _mobileController.text = user.mobileNumber ?? '';
+      _referralController.text = user.referral ?? '';
     }
   }
 
@@ -43,6 +45,8 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
     _emailController.dispose();
     _mobileController.dispose();
     _referralController.dispose();
+    _currentPasswordController.dispose();
+    _newPasswordController.dispose();
     super.dispose();
   }
 
@@ -57,12 +61,22 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
 
     try {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      final success = await authProvider.updateProfile(
+      bool success = await authProvider.updateProfile(
         _usernameController.text,
         _emailController.text,
         mobileNumber: _mobileController.text,
         referral: _referralController.text,
       );
+
+      // If password fields are filled, update password
+      if (success &&
+          _currentPasswordController.text.isNotEmpty &&
+          _newPasswordController.text.isNotEmpty) {
+        success = await authProvider.userService.changePassword(
+          currentPassword: _currentPasswordController.text,
+          newPassword: _newPasswordController.text,
+        );
+      }
 
       if (success && mounted) {
         Navigator.pop(context, true);
@@ -170,6 +184,28 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                   decoration: const InputDecoration(
                     labelText: 'Referral Number',
                     prefixIcon: Icon(Icons.card_giftcard),
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // Password update fields
+                TextFormField(
+                  controller: _currentPasswordController,
+                  obscureText: true,
+                  decoration: const InputDecoration(
+                    labelText: 'Current Password',
+                    prefixIcon: Icon(Icons.lock),
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _newPasswordController,
+                  obscureText: true,
+                  decoration: const InputDecoration(
+                    labelText: 'New Password',
+                    prefixIcon: Icon(Icons.lock_outline),
                     border: OutlineInputBorder(),
                   ),
                 ),

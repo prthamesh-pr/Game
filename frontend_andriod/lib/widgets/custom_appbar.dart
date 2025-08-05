@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import '../constants/colors.dart';
 import '../utils/utils.dart';
 import '../screens/transactions_screen.dart';
-import 'package:provider/provider.dart';
-import '../providers/auth_provider.dart';
 import 'add_token_dialog.dart';
 import 'withdraw_dialog.dart';
 
@@ -214,31 +212,17 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   // Show dialog to add tokens
   void _showAddTokensDialog(BuildContext context) {
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final qrImageUrl = '';
     showDialog(
       context: context,
-      builder: (context) => AddTokenDialog(
-        qrImageUrl: qrImageUrl,
-        onSubmit: (amount, upiId, userName, paymentApp) async {
-          // TODO: Implement token add logic, e.g. call API
-          await authProvider.refreshWalletBalance();
-        },
-      ),
+      builder: (context) => const AddTokenDialog(),
     );
   }
 
   // Show dialog to withdraw tokens
   void _showWithdrawDialog(BuildContext context) {
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
     showDialog(
       context: context,
-      builder: (context) => WithdrawDialog(
-        onSubmit: (amount, phone, paymentApp) async {
-          // TODO: Implement withdraw logic, e.g. call API
-          await authProvider.refreshWalletBalance();
-        },
-      ),
+      builder: (context) => const WithdrawDialog(),
     );
   }
 }

@@ -119,21 +119,38 @@ const registerUser = async (req, res) => {
  */
 const loginUser = async (req, res) => {
   try {
+    console.log('🚀 [loginUser] Login attempt started');
     // Debug: print incoming request body
     console.log('🔍 [loginUser] Incoming body:', req.body);
     // Accept both 'identifier' and 'email' for backward compatibility
     const { identifier, email, password } = req.body; 
     const loginIdentifier = identifier || email;
 
+    console.log('🔍 [loginUser] Using identifier:', loginIdentifier);
+    console.log('🔍 [loginUser] Password provided:', !!password);
+
+    if (!loginIdentifier || !password) {
+      console.log('❌ [loginUser] Missing credentials');
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide username/email/mobile and password'
+      });
+    }
+
+    console.log('🔍 [loginUser] Calling User.findByCredentials...');
     // Find user by credentials
     const user = await User.findByCredentials(loginIdentifier, password);
+    console.log('✅ [loginUser] User authentication successful');
 
     // Generate JWT token
+    console.log('🔍 [loginUser] Generating token...');
     const token = generateToken(user._id, 'user');
 
     // Update last login
+    console.log('🔍 [loginUser] Updating last login...');
     await user.updateLastLogin();
 
+    console.log('✅ [loginUser] Login process completed successfully');
     res.json({
       success: true,
       message: 'Login successful',
@@ -156,15 +173,18 @@ const loginUser = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('User login error:', error);
+    console.error('❌ [loginUser] Login error occurred:', error.message);
+    console.error('❌ [loginUser] Full error:', error);
     
     if (error.message === 'Invalid credentials') {
+      console.log('❌ [loginUser] Returning 401 - Invalid credentials');
       return res.status(401).json({
         success: false,
         message: 'Invalid email/mobile number/username or password'
       });
     }
 
+    console.log('❌ [loginUser] Returning 500 - Internal server error');
     res.status(500).json({
       success: false,
       message: 'Internal server error during login'

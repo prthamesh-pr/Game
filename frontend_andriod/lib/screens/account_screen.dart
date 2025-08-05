@@ -1,5 +1,4 @@
 import '../widgets/add_token_dialog.dart';
-import '../services/wallet_service.dart';
 import '../widgets/withdraw_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -180,49 +179,9 @@ class _AccountScreenState extends State<AccountScreen> {
                                 backgroundColor: AppColors.success,
                               ),
                               onPressed: () async {
-                                final walletService = WalletService();
-                                final qrUrl = await walletService
-                                    .fetchQrCodeUrl();
-                                final authProvider = Provider.of<AuthProvider>(
-                                  context,
-                                  listen: false,
-                                );
-                                final user = authProvider.currentUser;
                                 showDialog(
                                   context: context,
-                                  builder: (context) => AddTokenDialog(
-                                    qrImageUrl: qrUrl,
-                                    onSubmit:
-                                        (
-                                          amount,
-                                          upiId,
-                                          userName,
-                                          paymentApp,
-                                        ) async {
-                                          final success = await walletService
-                                              .requestAddToken(
-                                                amount,
-                                                upiId,
-                                                userName,
-                                                paymentApp,
-                                                user?.id ?? '',
-                                              );
-                                          ScaffoldMessenger.of(
-                                            context,
-                                          ).showSnackBar(
-                                            SnackBar(
-                                              content: Text(
-                                                success
-                                                    ? 'Token add request sent!'
-                                                    : 'Failed to send request',
-                                              ),
-                                              backgroundColor: success
-                                                  ? Colors.green
-                                                  : Colors.red,
-                                            ),
-                                          );
-                                        },
-                                  ),
+                                  builder: (context) => const AddTokenDialog(),
                                 );
                               },
                             ),
@@ -234,40 +193,9 @@ class _AccountScreenState extends State<AccountScreen> {
                                 backgroundColor: AppColors.warning,
                               ),
                               onPressed: () {
-                                final walletService = WalletService();
-                                final authProvider = Provider.of<AuthProvider>(
-                                  context,
-                                  listen: false,
-                                );
-                                final user = authProvider.currentUser;
                                 showDialog(
                                   context: context,
-                                  builder: (context) => WithdrawDialog(
-                                    onSubmit:
-                                        (amount, phone, paymentApp) async {
-                                          final success = await walletService
-                                              .requestWithdraw(
-                                                amount,
-                                                phone,
-                                                paymentApp,
-                                                user?.id ?? '',
-                                              );
-                                          ScaffoldMessenger.of(
-                                            context,
-                                          ).showSnackBar(
-                                            SnackBar(
-                                              content: Text(
-                                                success
-                                                    ? 'Withdrawal request sent!'
-                                                    : 'Failed to send request',
-                                              ),
-                                              backgroundColor: success
-                                                  ? Colors.green
-                                                  : Colors.red,
-                                            ),
-                                          );
-                                        },
-                                  ),
+                                  builder: (context) => const WithdrawDialog(),
                                 );
                               },
                             ),

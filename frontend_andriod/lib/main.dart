@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'providers/auth_provider.dart';
-import 'providers/game_provider.dart';
+import 'providers/game_provider_updated.dart';
+import 'providers/wallet_provider.dart';
 import 'screens/auth_splash_screen.dart';
 import 'constants/app_constants.dart';
 import 'constants/theme_data.dart';
@@ -40,7 +41,8 @@ class GameApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
-        ChangeNotifierProvider(create: (_) => GameProvider()),
+        ChangeNotifierProvider(create: (_) => GameProviderUpdated()),
+        ChangeNotifierProvider(create: (_) => WalletProvider()),
       ],
       child: MaterialApp(
         title: AppConstants.appName,

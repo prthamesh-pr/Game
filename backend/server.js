@@ -449,6 +449,10 @@ if (process.env.NODE_ENV === 'production') {
   });
 }
 
+// Start auto result generation job
+const { startAutoResultJob } = require('./scripts/autoResultJobNew');
+startAutoResultJob();
+
 // Start server
 const PORT = process.env.PORT || 5000;
 

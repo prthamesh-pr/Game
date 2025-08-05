@@ -56,8 +56,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
         _usernameController.text.trim(),
         _emailController.text.trim(),
         _passwordController.text,
-        _mobileNumberController.text.trim(),
-        _referralController.text.trim(),
+        _mobileNumberController.text.trim().isEmpty 
+            ? null 
+            : _mobileNumberController.text.trim(),
+        _referralController.text.trim().isEmpty 
+            ? null 
+            : _referralController.text.trim(),
       );
 
       if (success && mounted) {

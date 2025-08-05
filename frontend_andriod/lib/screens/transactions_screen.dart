@@ -195,8 +195,8 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                   children: [
                     CircleAvatar(
                       backgroundColor: isCredit
-                          ? AppColors.success.withOpacity(0.15)
-                          : AppColors.error.withOpacity(0.15),
+                          ? AppColors.success.withValues(alpha: 0.15)
+                          : AppColors.error.withValues(alpha: 0.15),
                       child: Icon(
                         isCredit ? Icons.arrow_downward : Icons.arrow_upward,
                         color: isCredit ? AppColors.success : AppColors.error,
@@ -221,7 +221,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                     vertical: 5,
                   ),
                   decoration: BoxDecoration(
-                    color: statusColor.withOpacity(0.08),
+                    color: statusColor.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(color: statusColor),
                   ),

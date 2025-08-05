@@ -173,6 +173,31 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
+                    if (user?.id != null && user!.id!.isNotEmpty)
+                      Text(
+                        'ID: ${user.id}',
+                        style: TextStyle(
+                          color: Colors.white70,
+                          fontSize: subtitleSize,
+                        ),
+                      ),
+                    if (user?.mobileNumber != null &&
+                        user!.mobileNumber!.isNotEmpty)
+                      Text(
+                        'Mobile: ${user.mobileNumber}',
+                        style: TextStyle(
+                          color: Colors.white70,
+                          fontSize: subtitleSize,
+                        ),
+                      ),
+                    if (user?.referral != null && user!.referral!.isNotEmpty)
+                      Text(
+                        'Referral: ${user.referral}',
+                        style: TextStyle(
+                          color: Colors.white70,
+                          fontSize: subtitleSize,
+                        ),
+                      ),
                     const SizedBox(height: 8),
                     Container(
                       padding: const EdgeInsets.symmetric(
@@ -294,19 +319,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             ? Wrap(
                                 spacing: 8,
                                 children: numbers
-                                    .map((num) => Chip(label: Text(num)))
+                                    .map((number) => Chip(label: Text(number)))
                                     .toList(),
                               )
                             : Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: numbers
                                     .map(
-                                      (num) => Padding(
+                                      (number) => Padding(
                                         padding: const EdgeInsets.symmetric(
                                           vertical: 2.0,
                                         ),
                                         child: Text(
-                                          num,
+                                          number,
                                           style: TextStyle(fontSize: 16),
                                         ),
                                       ),

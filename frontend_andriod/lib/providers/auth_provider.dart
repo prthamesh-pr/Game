@@ -72,7 +72,7 @@ class AuthProvider with ChangeNotifier {
       if (_isInitialized) notifyListeners();
 
       // Load user from auth service
-      final user = await _authService.loadUserData();
+      final user = await _authService.getCurrentUser();
 
       if (user != null) {
         _currentUser = user;
@@ -124,17 +124,18 @@ class AuthProvider with ChangeNotifier {
 
     try {
       final user = await _authService.register(
-        username,
-        email,
-        password,
-        mobileNumber,
-        referral,
+        username: username,
+        email: email,
+        password: password,
+        mobileNumber: mobileNumber,
+        referral: referral,
       );
       _currentUser = user;
       _isLoggedIn = true;
       return true;
     } catch (e) {
-      debugPrint('Registration error: $e');
+      debugPrint('Registration error in provider: $e');
+      // Error is already shown by AuthService, so we don't need to show it again
       return false;
     } finally {
       _isLoading = false;
@@ -154,8 +155,8 @@ class AuthProvider with ChangeNotifier {
 
     try {
       final user = await _userService.updateUserProfile(
-        username,
-        email,
+        username: username,
+        email: email,
         mobileNumber: mobileNumber,
         referral: referral,
       );
@@ -223,8 +224,8 @@ class AuthProvider with ChangeNotifier {
 
     try {
       final result = await _userService.changePassword(
-        currentPassword,
-        newPassword,
+        currentPassword: currentPassword,
+        newPassword: newPassword,
       );
       return result;
     } catch (e) {
@@ -280,6 +281,19 @@ class AuthProvider with ChangeNotifier {
     } finally {
       _isLoading = false;
       notifyListeners();
+    }
+  }
+
+  // Refresh user data
+  Future<void> refreshUserData() async {
+    try {
+      if (_isLoggedIn && _currentUser != null && !_currentUser!.isGuest) {
+        final user = await _userService.getUserProfile();
+        _currentUser = user;
+        notifyListeners();
+      }
+    } catch (e) {
+      debugPrint('Refresh user data error: $e');
     }
   }
 }

@@ -36,12 +36,29 @@ class ApiService {
   }
 
   // HTTP GET request
-  Future<dynamic> get(String endpoint, {bool requireAuth = true}) async {
+  Future<dynamic> get(
+    String endpoint, {
+    bool requireAuth = true,
+    Map<String, String>? queryParams,
+  }) async {
     try {
       final headers = await _getHeaders(requireAuth: requireAuth);
+
+      // Build URL with query parameters
+      String url = '$baseUrl$endpoint';
+      if (queryParams != null && queryParams.isNotEmpty) {
+        final queryString = queryParams.entries
+            .map(
+              (e) =>
+                  '${Uri.encodeComponent(e.key)}=${Uri.encodeComponent(e.value)}',
+            )
+            .join('&');
+        url += '?$queryString';
+      }
+
       final response = await http
-          .get(Uri.parse('$baseUrl$endpoint'), headers: headers)
-          .timeout(const Duration(seconds: 10));
+          .get(Uri.parse(url), headers: headers)
+          .timeout(const Duration(seconds: 30));
 
       return _handleResponse(response);
     } on SocketException {
@@ -50,35 +67,71 @@ class ApiService {
       throw BadRequestException('Failed to process the request');
     } catch (e) {
       if (e is UnauthorizedException) rethrow;
-      throw FetchDataException('Error: ${e.toString()}');
+      throw FetchDataException('Error During Communication: ${e.toString()}');
     }
   }
 
-  // HTTP POST request
+  // HTTP POST request with retry for critical operations
   Future<dynamic> post(
     String endpoint,
     dynamic body, {
     bool requireAuth = true,
+    int maxRetries = 2,
   }) async {
-    try {
-      final headers = await _getHeaders(requireAuth: requireAuth);
-      final response = await http
-          .post(
-            Uri.parse('$baseUrl$endpoint'),
-            headers: headers,
-            body: json.encode(body),
-          )
-          .timeout(const Duration(seconds: 15));
+    int attempts = 0;
 
-      return _handleResponse(response);
-    } on SocketException {
-      throw FetchDataException('No Internet connection');
-    } on HttpException {
-      throw BadRequestException('Failed to process the request');
-    } catch (e) {
-      if (e is UnauthorizedException) rethrow;
-      throw FetchDataException('Error: ${e.toString()}');
+    while (attempts <= maxRetries) {
+      try {
+        final headers = await _getHeaders(requireAuth: requireAuth);
+
+        // Use longer timeout for registration and critical operations
+        int timeoutSeconds = 15;
+        if (endpoint.contains('/create') || endpoint.contains('/register')) {
+          timeoutSeconds = 30;
+        }
+
+        final response = await http
+            .post(
+              Uri.parse('$baseUrl$endpoint'),
+              headers: headers,
+              body: json.encode(body),
+            )
+            .timeout(Duration(seconds: timeoutSeconds));
+
+        return _handleResponse(response);
+      } on SocketException {
+        if (attempts == maxRetries) {
+          throw FetchDataException('No Internet connection');
+        }
+      } on HttpException {
+        if (attempts == maxRetries) {
+          throw BadRequestException('Failed to process the request');
+        }
+      } catch (e) {
+        if (e is UnauthorizedException) rethrow;
+
+        // Retry on timeout for critical operations
+        if (e.toString().contains('TimeoutException') &&
+            endpoint.contains('/create') &&
+            attempts < maxRetries) {
+          attempts++;
+          debugPrint(
+            'Retrying request (attempt ${attempts + 1}/${maxRetries + 1}) for $endpoint',
+          );
+          await Future.delayed(Duration(seconds: 2));
+          continue;
+        }
+
+        if (attempts == maxRetries) {
+          throw FetchDataException(
+            'Error During Communication: ${e.toString()}',
+          );
+        }
+      }
+      attempts++;
     }
+
+    throw FetchDataException('Max retries exceeded');
   }
 
   // HTTP PUT request
@@ -95,7 +148,7 @@ class ApiService {
             headers: headers,
             body: json.encode(body),
           )
-          .timeout(const Duration(seconds: 15));
+          .timeout(const Duration(seconds: 30));
 
       return _handleResponse(response);
     } on SocketException {
@@ -104,7 +157,7 @@ class ApiService {
       throw BadRequestException('Failed to process the request');
     } catch (e) {
       if (e is UnauthorizedException) rethrow;
-      throw FetchDataException('Error: ${e.toString()}');
+      throw FetchDataException('Error During Communication: ${e.toString()}');
     }
   }
 
@@ -114,7 +167,7 @@ class ApiService {
       final headers = await _getHeaders(requireAuth: requireAuth);
       final response = await http
           .delete(Uri.parse('$baseUrl$endpoint'), headers: headers)
-          .timeout(const Duration(seconds: 10));
+          .timeout(const Duration(seconds: 30));
 
       return _handleResponse(response);
     } on SocketException {
@@ -123,12 +176,15 @@ class ApiService {
       throw BadRequestException('Failed to process the request');
     } catch (e) {
       if (e is UnauthorizedException) rethrow;
-      throw FetchDataException('Error: ${e.toString()}');
+      throw FetchDataException('Error During Communication: ${e.toString()}');
     }
   }
 
   // Handle HTTP response
   dynamic _handleResponse(http.Response response) {
+    debugPrint('Response status: ${response.statusCode}');
+    debugPrint('Response body: ${response.body}');
+
     switch (response.statusCode) {
       case 200:
       case 201:
@@ -143,8 +199,13 @@ class ApiService {
       case 429:
         throw TooManyRequestsException(response.body);
       case 500:
+        throw ServerException(
+          'Server error: ${response.statusCode} - ${response.body}',
+        );
       default:
-        throw ServerException('Server error: ${response.statusCode}');
+        throw ServerException(
+          'Server error: ${response.statusCode} - ${response.body}',
+        );
     }
   }
 

@@ -57,13 +57,15 @@ class GameProvider with ChangeNotifier {
   // Load recent results
   Future<void> _loadResults() async {
     try {
-      final response = await _gameService.getRecentResults();
+      final response = await _gameService.getResults(limit: 20);
 
-      final results = (response['results'] as List)
-          .map((item) => GameResult.fromJson(item))
-          .toList();
+      if (response['success'] == true && response['results'] != null) {
+        final results = (response['results'] as List)
+            .map((item) => GameResult.fromJson(item))
+            .toList();
 
-      _gameResults = results;
+        _gameResults = results;
+      }
     } catch (e) {
       debugPrint('Error loading game results: $e');
     }
@@ -72,13 +74,15 @@ class GameProvider with ChangeNotifier {
   // Load user game plays
   Future<void> _loadGamePlays() async {
     try {
-      final response = await _userService.getUserSelections(limit: 50);
+      final response = await _userService.getUserBets(limit: 50);
 
-      final plays = (response['selections'] as List)
-          .map((item) => GamePlay.fromJson(item))
-          .toList();
+      if (response['success'] == true && response['bets'] != null) {
+        final plays = (response['bets'] as List)
+            .map((item) => GamePlay.fromJson(item))
+            .toList();
 
-      _gamePlays = plays;
+        _gamePlays = plays;
+      }
     } catch (e) {
       debugPrint('Error loading game plays: $e');
     }
@@ -96,12 +100,10 @@ class GameProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      final userId = authProvider.currentUser?.id;
-      await _gameService.selectNumber(
-        classType: gameClass,
-        number: int.parse(number),
-        amount: amount,
-        userId: userId,
+      await _gameService.placeBet(
+        gameClass: gameClass,
+        selectedNumber: int.parse(number),
+        betAmount: amount,
         timeSlot: timeSlot,
       );
 
@@ -155,13 +157,16 @@ class GameProvider with ChangeNotifier {
   // Get valid numbers for a specific class
   Future<List<String>> getValidNumbers(String gameClass) async {
     try {
-      final response = await _gameService.getValidNumbers(gameClass);
+      final response = await _gameService.getNumbersByClass(gameClass);
 
-      final validNumbers = (response['validNumbers'] as List)
-          .map((item) => item.toString())
-          .toList();
+      if (response['success'] == true && response['numbers'] != null) {
+        final validNumbers = (response['numbers'] as List)
+            .map((item) => item.toString())
+            .toList();
 
-      return validNumbers;
+        return validNumbers;
+      }
+      return [];
     } catch (e) {
       debugPrint('Get valid numbers error: $e');
       return [];
@@ -174,7 +179,7 @@ class GameProvider with ChangeNotifier {
     int limit = 10,
   }) async {
     try {
-      final response = await _gameService.getAllRounds(
+      final response = await _gameService.getResults(
         page: page,
         limit: limit,
       );
@@ -188,13 +193,16 @@ class GameProvider with ChangeNotifier {
   // Get current user selections for the current round
   Future<List<GamePlay>> getCurrentSelections() async {
     try {
-      final response = await _gameService.getCurrentSelections();
+      final response = await _gameService.getUserBets();
 
-      final selections = (response['selections'] as List)
-          .map((item) => GamePlay.fromJson(item))
-          .toList();
+      if (response['success'] == true && response['bets'] != null) {
+        final selections = (response['bets'] as List)
+            .map((item) => GamePlay.fromJson(item))
+            .toList();
 
-      return selections;
+        return selections;
+      }
+      return [];
     } catch (e) {
       debugPrint('Get current selections error: $e');
       return [];
@@ -239,7 +247,7 @@ class GameProvider with ChangeNotifier {
     return _gamePlays.where((play) => play.userId == userId).toList();
   }
 
-  // Place a bet (to replace the selectNumber method when needed)
+  // Place a bet
   Future<bool> placeBet({
     required String gameClass,
     required String number,
@@ -247,14 +255,41 @@ class GameProvider with ChangeNotifier {
     required AuthProvider authProvider,
     String? timeSlot,
   }) async {
-    // This is just an alias for selectNumber method
-    return selectNumber(
-      gameClass: gameClass,
-      number: number,
-      amount: amount,
-      authProvider: authProvider,
-      timeSlot: timeSlot,
-    );
+    try {
+      _isLoading = true;
+      notifyListeners();
+
+      // Call the game service to place the bet
+      final response = await _gameService.placeBet(
+        gameClass: gameClass,
+        selectedNumber: number,
+        betAmount: amount,
+        timeSlot: timeSlot,
+      );
+
+      if (response['success'] == true) {
+        // Update user's wallet balance if returned
+        if (response['data'] != null && response['data']['newWalletBalance'] != null) {
+          await authProvider.updateWalletBalance(response['data']['newWalletBalance']);
+        }
+
+        // Reload game data to reflect the new bet
+        await loadGameData();
+        
+        Utils.showToast('Bet placed successfully');
+        return true;
+      } else {
+        Utils.showToast(response['message'] ?? 'Failed to place bet', isError: true);
+        return false;
+      }
+    } catch (e) {
+      debugPrint('Place bet error: $e');
+      Utils.showToast('Failed to place bet', isError: true);
+      return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
   }
 
   // For demo/testing purposes - reset mock data

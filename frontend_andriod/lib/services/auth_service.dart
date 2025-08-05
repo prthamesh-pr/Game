@@ -1,11 +1,8 @@
-import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../constants/app_constants.dart';
 import '../constants/api_constants.dart';
 import '../models/user_model.dart';
-import '../utils/exceptions.dart';
 import '../utils/utils.dart';
 import 'api_service.dart';
 
@@ -20,72 +17,70 @@ class AuthService {
   // Login user
   Future<User> login(String identifier, String password) async {
     try {
-      // Accept username or phoneNumber for login
-      final isPhone = RegExp(r'^\d{10,}$').hasMatch(identifier);
-      final loginData = isPhone
-          ? {
-              'phoneNumber': identifier,
-              'password': password,
-            }
-          : {
-              'username': identifier,
-              'password': password,
-            };
       final response = await _apiService.post(
         ApiConstants.loginEndpoint,
-        loginData,
+        {
+          'identifier': identifier,
+          'password': password,
+        },
         requireAuth: false,
       );
+
+      // Check if response indicates success
+      if (response['success'] != true) {
+        throw Exception(response['message'] ?? 'Login failed');
+      }
 
       // Save auth tokens
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(ApiConstants.tokenKey, response['token']);
-      await prefs.setString(
-        ApiConstants.refreshTokenKey,
-        response['refreshToken'],
-      );
-      await prefs.setBool(ApiConstants.isLoggedInKey, true);
+      
+      if (response['refreshToken'] != null) {
+        await prefs.setString(
+          ApiConstants.refreshTokenKey,
+          response['refreshToken'],
+        );
+      }
 
-      // Parse and save user data
-      final user = User.fromJson(response['user']);
-      await prefs.setString(AppConstants.userKey, json.encode(user.toJson()));
+      // Create user object from response
+      final userJson = response['user'];
+      final user = User.fromJson(userJson);
 
-      Utils.showToast(AppConstants.loginSuccess);
+      // Save user data
+      await prefs.setString(ApiConstants.userIdKey, user.id ?? '');
+      await prefs.setString(ApiConstants.usernameKey, user.username ?? '');
+
+      Utils.showToast('Login successful');
       return user;
     } catch (e) {
       debugPrint('Login error: $e');
-      Utils.showToast(
-        e is UnauthorizedException
-            ? 'Invalid email or password'
-            : 'Login failed: ${e.toString()}',
-        isError: true,
-      );
+      Utils.showToast('Login failed', isError: true);
       rethrow;
     }
   }
 
   // Register user
-  Future<User> register(
-    String username,
-    String email,
-    String password, [
+  Future<User> register({
+    required String username,
+    required String email,
+    required String password,
     String? mobileNumber,
     String? referral,
-  ]) async {
+  }) async {
     try {
       final Map<String, dynamic> requestData = {
-        'username': username,
-        'email': email,
+        'username': username.trim(),
+        'email': email.trim(),
         'password': password,
       };
 
-      // Add mobile number if provided
-      if (mobileNumber != null && mobileNumber.isNotEmpty) {
-        requestData['mobileNumber'] = mobileNumber;
+      // Add optional fields
+      if (mobileNumber != null && mobileNumber.trim().isNotEmpty) {
+        requestData['mobileNumber'] = mobileNumber.trim();
       }
-      // Add referral if provided
-      if (referral != null && referral.isNotEmpty) {
-        requestData['referral'] = referral;
+      
+      if (referral != null && referral.trim().isNotEmpty) {
+        requestData['referral'] = referral.trim();
       }
 
       final response = await _apiService.post(
@@ -94,29 +89,26 @@ class AuthService {
         requireAuth: false,
       );
 
-      // Save auth tokens
+      // Check if response indicates success
+      if (response['success'] != true) {
+        throw Exception(response['message'] ?? 'Registration failed');
+      }
+
+      // Save auth tokens if provided
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(ApiConstants.tokenKey, response['token']);
-      await prefs.setString(
-        ApiConstants.refreshTokenKey,
-        response['refreshToken'],
-      );
-      await prefs.setBool(ApiConstants.isLoggedInKey, true);
+      if (response['token'] != null) {
+        await prefs.setString(ApiConstants.tokenKey, response['token']);
+      }
 
-      // Parse and save user data
-      final user = User.fromJson(response['user']);
-      await prefs.setString(AppConstants.userKey, json.encode(user.toJson()));
+      // Create user object from response
+      final userJson = response['user'];
+      final user = User.fromJson(userJson);
 
-      Utils.showToast('Registration successful!');
+      Utils.showToast('Registration successful');
       return user;
     } catch (e) {
       debugPrint('Registration error: $e');
-      Utils.showToast(
-        e is BadRequestException
-            ? 'Registration failed: Email may already be in use'
-            : 'Registration failed: ${e.toString()}',
-        isError: true,
-      );
+      Utils.showToast('Registration failed', isError: true);
       rethrow;
     }
   }
@@ -124,101 +116,82 @@ class AuthService {
   // Logout user
   Future<void> logout() async {
     try {
+      // Call logout endpoint if authenticated
       try {
-        // Try to notify server about logout
         await _apiService.post(ApiConstants.logoutEndpoint, {});
       } catch (e) {
-        // Ignore errors when logging out from server
-        debugPrint('Server logout error: $e');
+        debugPrint('Logout API call failed: $e');
+        // Continue with local logout even if API fails
       }
 
-      // Clear shared preferences
+      // Clear local storage
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove(ApiConstants.tokenKey);
       await prefs.remove(ApiConstants.refreshTokenKey);
-      await prefs.remove(AppConstants.userKey);
-      await prefs.setBool(ApiConstants.isLoggedInKey, false);
+      await prefs.remove(ApiConstants.userIdKey);
+      await prefs.remove(ApiConstants.usernameKey);
+
+      Utils.showToast('Logged out successfully');
     } catch (e) {
       debugPrint('Logout error: $e');
+      Utils.showToast('Logout failed', isError: true);
+      rethrow;
     }
   }
 
-  // Check if token is valid
-  Future<bool> verifyToken() async {
-    try {
-      await _apiService.get(ApiConstants.verifyTokenEndpoint);
-      return true;
-    } catch (e) {
-      if (e is UnauthorizedException) {
-        // Try to refresh token
-        final refreshed = await _apiService.refreshToken();
-        if (refreshed) {
-          try {
-            await _apiService.get(ApiConstants.verifyTokenEndpoint);
-            return true;
-          } catch (_) {
-            return false;
-          }
-        }
-      }
-      return false;
-    }
-  }
-
-  // Load user data from shared preferences
-  Future<User?> loadUserData() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final isLoggedIn = prefs.getBool(ApiConstants.isLoggedInKey) ?? false;
-
-      if (isLoggedIn) {
-        final userData = prefs.getString(AppConstants.userKey);
-        if (userData != null && userData.isNotEmpty) {
-          try {
-            final userJson = json.decode(userData);
-            return User.fromJson(userJson);
-          } catch (e) {
-            debugPrint('Error parsing user data: $e');
-            // Clear corrupted data
-            await _clearUserData();
-            return null;
-          }
-        }
-      }
-      return null;
-    } catch (e) {
-      debugPrint('Error loading user data: $e');
-      return null;
-    }
-  }
-
-  // Check if user is logged in and token is valid
+  // Check if user is authenticated
   Future<bool> isAuthenticated() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final isLoggedIn = prefs.getBool(ApiConstants.isLoggedInKey) ?? false;
       final token = prefs.getString(ApiConstants.tokenKey);
-
-      if (isLoggedIn && token != null && token.isNotEmpty) {
-        return await verifyToken();
+      
+      if (token == null || token.isEmpty) {
+        return false;
       }
-      return false;
+
+      // Verify token with server
+      await _apiService.get(ApiConstants.verifyTokenEndpoint);
+      return true;
     } catch (e) {
-      debugPrint('Auth check error: $e');
+      debugPrint('Authentication check failed: $e');
       return false;
     }
   }
 
-  // Clear user data
-  Future<void> _clearUserData() async {
+  // Get current user data
+  Future<User?> getCurrentUser() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString(ApiConstants.tokenKey);
+      
+      if (token == null || token.isEmpty) {
+        return null;
+      }
+
+      // Get user profile from server
+      final response = await _apiService.get(ApiConstants.userProfileEndpoint);
+      
+      if (response['success'] == true && response['user'] != null) {
+        return User.fromJson(response['user']);
+      }
+      
+      return null;
+    } catch (e) {
+      debugPrint('Get current user error: $e');
+      return null;
+    }
+  }
+
+  // Clear authentication data
+  Future<void> clearAuthData() async {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove(ApiConstants.tokenKey);
       await prefs.remove(ApiConstants.refreshTokenKey);
-      await prefs.remove(AppConstants.userKey);
-      await prefs.setBool(ApiConstants.isLoggedInKey, false);
+      await prefs.remove(ApiConstants.userIdKey);
+      await prefs.remove(ApiConstants.usernameKey);
     } catch (e) {
-      debugPrint('Error clearing user data: $e');
+      debugPrint('Clear auth data error: $e');
     }
   }
 }

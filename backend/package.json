@@ -6,15 +6,8 @@
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
-    "fix-mobile": "node scripts/fix-mobile-numbers.js",
-    "fix-mobile-comprehensive": "node scripts/comprehensive-mobile-fix.js",
-    "test-auth": "node scripts/test-auth.js",
-    "test-api-live": "node scripts/test-api-live.js",
-    "test-api-fixed": "node scripts/test-api-fixed.js",
-    "create-test-admin": "node scripts/create-test-admin.js",
-    "create-active-round": "node scripts/create-active-round.js",
-    "setup-production": "node scripts/create-test-admin.js && node scripts/create-active-round.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test-apis": "node scripts/test-all-apis.js",
+    "test": "node scripts/test-all-apis.js"
   },
   "keywords": [
     "number-game",

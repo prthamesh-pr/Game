@@ -1,5 +1,4 @@
 import 'package:flutter/foundation.dart';
-
 import '../constants/api_constants.dart';
 import '../utils/utils.dart';
 import 'api_service.dart';
@@ -17,7 +16,7 @@ class GameService {
     try {
       final response = await _apiService.get(
         ApiConstants.currentRoundEndpoint,
-        requireAuth: false, // Allow unauthenticated access
+        requireAuth: false,
       );
       return response;
     } catch (e) {
@@ -26,112 +25,94 @@ class GameService {
     }
   }
 
-  // Get valid numbers for a class type
-  Future<Map<String, dynamic>> getValidNumbers(String classType) async {
+  // Get all game numbers
+  Future<Map<String, dynamic>> getAllGameNumbers() async {
     try {
       final response = await _apiService.get(
-        '${ApiConstants.validNumbersEndpoint}/$classType',
-        requireAuth: false, // Allow unauthenticated access
+        ApiConstants.gameNumbersEndpoint,
+        requireAuth: false,
       );
       return response;
     } catch (e) {
-      debugPrint('Get valid numbers error: $e');
+      debugPrint('Get all game numbers error: $e');
       rethrow;
     }
   }
 
-  // Get game information
-  Future<Map<String, dynamic>> getGameInfo() async {
+  // Get numbers for specific class (A, B, C, D)
+  Future<Map<String, dynamic>> getNumbersByClass(String gameClass) async {
     try {
       final response = await _apiService.get(
-        ApiConstants.gameInfoEndpoint,
-        requireAuth: false, // Allow unauthenticated access
+        '${ApiConstants.gameNumbersEndpoint}/$gameClass',
+        requireAuth: false,
       );
       return response;
     } catch (e) {
-      debugPrint('Get game info error: $e');
+      debugPrint('Get numbers by class error: $e');
       rethrow;
     }
   }
 
-  // Get recent results
-  Future<Map<String, dynamic>> getRecentResults() async {
+  // Place a bet
+  Future<Map<String, dynamic>> placeBet({
+    required String gameClass,
+    required dynamic selectedNumber,
+    required double betAmount,
+    String? timeSlot,
+  }) async {
     try {
-      final response = await _apiService.get(
-        ApiConstants.recentResultsEndpoint,
-        requireAuth: false, // Allow unauthenticated access
+      final response = await _apiService.post(
+        ApiConstants.placeBetEndpoint,
+        {
+          'gameClass': gameClass,
+          'selectedNumber': selectedNumber,
+          'betAmount': betAmount,
+          if (timeSlot != null) 'timeSlot': timeSlot,
+        },
       );
+
+      Utils.showToast('Bet placed successfully');
       return response;
     } catch (e) {
-      debugPrint('Get recent results error: $e');
+      debugPrint('Place bet error: $e');
+      Utils.showToast('Failed to place bet', isError: true);
       rethrow;
     }
   }
 
-  // Get results by class type
-  Future<Map<String, dynamic>> getResultsByClass(String classType) async {
+  // Get user's bets
+  Future<Map<String, dynamic>> getUserBets() async {
     try {
-      final response = await _apiService.get(
-        '${ApiConstants.recentResultsEndpoint}?class=$classType',
-        requireAuth: false, // Allow unauthenticated access
-      );
+      final response = await _apiService.get(ApiConstants.userBetsEndpoint);
       return response;
     } catch (e) {
-      debugPrint('Get results by class error: $e');
+      debugPrint('Get user bets error: $e');
       rethrow;
     }
   }
 
-  // Get all rounds with pagination
-  Future<Map<String, dynamic>> getAllRounds({
+  // Get results
+  Future<Map<String, dynamic>> getResults({
     int page = 1,
     int limit = 10,
   }) async {
     try {
       final response = await _apiService.get(
-        '${ApiConstants.allRoundsEndpoint}?page=$page&limit=$limit',
-        requireAuth: false, // Allow unauthenticated access
+        '${ApiConstants.resultsEndpoint}?page=$page&limit=$limit',
+        requireAuth: false,
       );
       return response;
     } catch (e) {
-      debugPrint('Get all rounds error: $e');
+      debugPrint('Get results error: $e');
       rethrow;
     }
   }
 
-  // Select a number for the current round
-  Future<Map<String, dynamic>> selectNumber({
-    required String classType,
-    required int number,
-    required double amount,
-    String? userId,
-    String? timeSlot,
-  }) async {
-    try {
-      final response = await _apiService
-          .post(ApiConstants.selectNumberEndpoint, {
-            'classType': classType,
-            'number': number,
-            'amount': amount,
-            if (userId != null) 'userId': userId,
-            if (timeSlot != null) 'timeSlot': timeSlot,
-          });
-
-      Utils.showToast('Number selected successfully');
-      return response;
-    } catch (e) {
-      debugPrint('Select number error: $e');
-      Utils.showToast('Failed to select number', isError: true);
-      rethrow;
-    }
-  }
-
-  // Cancel a selection
+  // Cancel a bet/selection (if supported by backend)
   Future<Map<String, dynamic>> cancelSelection(String selectionId) async {
     try {
-      final response = await _apiService.post(
-        ApiConstants.cancelSelectionEndpoint,
-        {'selectionId': selectionId},
+      final response = await _apiService.delete(
+        '${ApiConstants.cancelBetEndpoint}/$selectionId',
       );
 
       Utils.showToast('Selection cancelled successfully');
@@ -143,15 +124,16 @@ class GameService {
     }
   }
 
-  // Get current selections
-  Future<Map<String, dynamic>> getCurrentSelections() async {
+  // Get results by class type
+  Future<Map<String, dynamic>> getResultsByClass(String gameClass) async {
     try {
       final response = await _apiService.get(
-        ApiConstants.currentSelectionsEndpoint,
+        '${ApiConstants.resultsEndpoint}?gameClass=$gameClass',
+        requireAuth: false,
       );
       return response;
     } catch (e) {
-      debugPrint('Get current selections error: $e');
+      debugPrint('Get results by class error: $e');
       rethrow;
     }
   }

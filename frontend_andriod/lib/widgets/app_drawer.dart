@@ -73,7 +73,7 @@ class _AppDrawerState extends State<AppDrawer> {
                         borderRadius: BorderRadius.circular(28),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.15),
+                            color: Colors.black.withValues(alpha: 0.15),
                             blurRadius: 8,
                             offset: const Offset(0, 4),
                           ),
@@ -109,11 +109,39 @@ class _AppDrawerState extends State<AppDrawer> {
                               fontWeight: FontWeight.w500,
                             ),
                           ),
-                          if (user?.email != null)
+                          if (user?.email != null && user!.email!.isNotEmpty)
                             Padding(
                               padding: const EdgeInsets.only(top: 2.0),
                               child: Text(
-                                user!.email ?? '',
+                                user.email ?? '',
+                                style: const TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 13,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 1,
+                              ),
+                            ),
+                          if (user?.mobileNumber != null &&
+                              user!.mobileNumber!.isNotEmpty)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 2.0),
+                              child: Text(
+                                'Mobile: ${user.mobileNumber}',
+                                style: const TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 13,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 1,
+                              ),
+                            ),
+                          if (user?.referral != null &&
+                              user!.referral!.isNotEmpty)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 2.0),
+                              child: Text(
+                                'Referral: ${user.referral}',
                                 style: const TextStyle(
                                   color: Colors.white70,
                                   fontSize: 13,

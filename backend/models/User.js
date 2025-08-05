@@ -146,6 +146,8 @@ userSchema.methods.updateLastLogin = function() {
 
 // Static method to find user by email, mobile or username
 userSchema.statics.findByCredentials = async function(identifier, password) {
+  console.log('🔍 [findByCredentials] Looking for user with identifier:', identifier);
+  
   const user = await this.findOne({
     $or: [
       { mobileNumber: identifier },
@@ -155,15 +157,32 @@ userSchema.statics.findByCredentials = async function(identifier, password) {
     isActive: true
   });
 
+  console.log('🔍 [findByCredentials] User found:', !!user);
+  if (user) {
+    console.log('🔍 [findByCredentials] User details:', {
+      id: user._id,
+      username: user.username,
+      mobile: user.mobileNumber,
+      email: user.email,
+      isActive: user.isActive
+    });
+  }
+
   if (!user) {
+    console.log('❌ [findByCredentials] No user found');
     throw new Error('Invalid credentials');
   }
 
+  console.log('🔍 [findByCredentials] Checking password...');
   const isMatch = await user.checkPassword(password);
+  console.log('🔍 [findByCredentials] Password match result:', isMatch);
+  
   if (!isMatch) {
+    console.log('❌ [findByCredentials] Password mismatch');
     throw new Error('Invalid credentials');
   }
 
+  console.log('✅ [findByCredentials] Login successful');
   return user;
 };
 

@@ -329,7 +329,7 @@ class _GameScreenState extends State<GameScreen> {
           final success = await gameProvider.placeBet(
             gameClass: widget.gameClass,
             number: number,
-            amount: amount,
+            amount: amount.toDouble(),
             authProvider: authProvider,
             timeSlot: timeSlotStr,
           );
@@ -561,7 +561,7 @@ class _GameScreenState extends State<GameScreen> {
         children: [
           Container(
             width: double.infinity,
-            color: _getClassColor().withOpacity(0.1),
+            color: _getClassColor().withValues(alpha: 0.1),
             padding: const EdgeInsets.symmetric(vertical: 10),
             child: Text(
               'Select a number to place your bet',

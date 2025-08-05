@@ -50,7 +50,7 @@ class APITester {
       await Agent.deleteMany({ mobile: { $in: ['9999999999', 'agent1'] } });
 
       // Create test user
-      const userPassword = await bcrypt.hash('testpass123', 12);
+      const userPassword = await bcrypt.hash('TestPass123!', 12);
       this.testUser = await User.create({
         username: 'testuser',
         email: 'testuser@example.com',
@@ -61,7 +61,7 @@ class APITester {
       });
 
       // Create test admin
-      const adminPassword = await bcrypt.hash('admin123', 12);
+      const adminPassword = await bcrypt.hash('AdminPass123!', 12);
       this.testAdmin = await Admin.create({
         username: 'testadmin',
         email: 'testadmin@example.com',
@@ -112,7 +112,7 @@ class APITester {
       const registerResponse = await axios.post(`${BASE_URL}/auth/register`, {
         username: 'apitest',
         email: 'apitest@example.com',
-        password: 'testpass123',
+        password: 'TestPass123!',
         mobileNumber: '8888888888'
       });
 
@@ -121,7 +121,7 @@ class APITester {
       // Test user login
       const loginResponse = await axios.post(`${BASE_URL}/auth/login`, {
         identifier: 'testuser@example.com',
-        password: 'testpass123'
+        password: 'TestPass123!'
       });
 
       this.userToken = loginResponse.data.token;
@@ -149,15 +149,15 @@ class APITester {
 
     try {
       // Test get current round
-      const roundResponse = await axios.get(`${BASE_URL}/current-round`);
+      const roundResponse = await axios.get(`${BASE_URL}/game/current-round`);
       console.log('✅ Get current round successful');
 
       // Test get game numbers
-      const numbersResponse = await axios.get(`${BASE_URL}/numbers`);
+      const numbersResponse = await axios.get(`${BASE_URL}/game/numbers`);
       console.log('✅ Get game numbers successful');
 
       // Test place bet
-      const betResponse = await axios.post(`${BASE_URL}/bet`, {
+      const betResponse = await axios.post(`${BASE_URL}/game/bet`, {
         gameClass: 'A',
         selectedNumber: 123,
         betAmount: 100
@@ -168,14 +168,14 @@ class APITester {
       console.log('✅ Place bet successful');
 
       // Test get user bets
-      const userBetsResponse = await axios.get(`${BASE_URL}/bets`, {
+      const userBetsResponse = await axios.get(`${BASE_URL}/game/bets`, {
         headers: { Authorization: `Bearer ${this.userToken}` }
       });
 
       console.log('✅ Get user bets successful');
 
       // Test get results
-      const resultsResponse = await axios.get(`${BASE_URL}/results`);
+      const resultsResponse = await axios.get(`${BASE_URL}/game/results`);
       console.log('✅ Get results successful');
 
       return true;
@@ -191,14 +191,14 @@ class APITester {
 
     try {
       // Test get wallet balance
-      const balanceResponse = await axios.get(`${BASE_URL}/balance`, {
+      const balanceResponse = await axios.get(`${BASE_URL}/user/balance`, {
         headers: { Authorization: `Bearer ${this.userToken}` }
       });
 
       console.log('✅ Get wallet balance successful');
 
       // Test add balance request
-      const addBalanceResponse = await axios.post(`${BASE_URL}/wallet/add`, {
+      const addBalanceResponse = await axios.post(`${BASE_URL}/user/wallet/add`, {
         amount: 500,
         upiId: 'test@upi',
         userName: 'Test User',
@@ -212,7 +212,7 @@ class APITester {
       console.log('✅ Add balance request successful');
 
       // Test withdraw request
-      const withdrawResponse = await axios.post(`${BASE_URL}/wallet/withdraw`, {
+      const withdrawResponse = await axios.post(`${BASE_URL}/user/wallet/withdraw`, {
         amount: 200,
         phoneNumber: '9999999999',
         paymentApp: 'GooglePay',
@@ -224,7 +224,7 @@ class APITester {
       console.log('✅ Withdraw request successful');
 
       // Test get transactions
-      const transactionsResponse = await axios.get(`${BASE_URL}/transactions`, {
+      const transactionsResponse = await axios.get(`${BASE_URL}/user/transactions`, {
         headers: { Authorization: `Bearer ${this.userToken}` }
       });
 
@@ -262,8 +262,8 @@ class APITester {
 
       // Test change password
       const changePasswordResponse = await axios.post(`${BASE_URL}/user/change-password`, {
-        currentPassword: 'testpass123',
-        newPassword: 'newpass123'
+        currentPassword: 'TestPass123!',
+        newPassword: 'NewPass123!'
       }, {
         headers: { Authorization: `Bearer ${this.userToken}` }
       });
@@ -283,7 +283,7 @@ class APITester {
 
     try {
       // Test generate QR code
-      const qrResponse = await axios.post(`${BASE_URL}/qr/generate`, {
+      const qrResponse = await axios.post(`${BASE_URL}/user/qr/generate`, {
         amount: 100,
         paymentApp: 'GooglePay',
         upiId: 'test@upi'
@@ -294,7 +294,7 @@ class APITester {
       console.log('✅ Generate QR code successful');
 
       // Test get QR codes list
-      const qrListResponse = await axios.get(`${BASE_URL}/qr/list`, {
+      const qrListResponse = await axios.get(`${BASE_URL}/user/qr/list`, {
         headers: { Authorization: `Bearer ${this.userToken}` }
       });
 
@@ -315,7 +315,7 @@ class APITester {
       // Test admin login
       const adminLoginResponse = await axios.post(`${BASE_URL}/admin/login`, {
         email: 'testadmin@example.com',
-        password: 'admin123'
+        password: 'AdminPass123!'
       });
 
       this.adminToken = adminLoginResponse.data.token;

@@ -2,7 +2,7 @@
 /// Contains all API related constants for the application
 class ApiConstants {
   // Base URL for API
-  static const String baseUrl = 'http://localhost:5000/api';
+  static const String baseUrl = 'https://game-39rz.onrender.com/api';
 
   // User Authentication endpoints
   static const String registerEndpoint = '/auth/register';

@@ -17,7 +17,7 @@ const Bet = require('../models/Bet');
 const Result = require('../models/Result');
 const bcrypt = require('bcrypt');
 
-const BASE_URL = process.env.BASE_URL || 'http://localhost:5000/api';
+const BASE_URL = process.env.BASE_URL || process.env.API_URL || 'https://game-39rz.onrender.com/api';
 
 class APITester {
   constructor() {

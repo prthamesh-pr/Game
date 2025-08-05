@@ -1,23 +1,145 @@
-# 🎮 Game 999 - Complete Gaming Application
+# Game 999 - Number Game Backend & Frontend
 
-A full-stack responsive gaming application with **Backend API**, **Admin Panel**, **Flutter Mobile App**, and **Web Application**.
-
-## ✨ New Features
-
-- 🌐 **Responsive Web Application** - Optimized for desktop and tablet
-- 📱 **Mobile App** - Native Android/iOS experience  
-- 🎨 **Different UI for Web vs Mobile** - Platform-specific designs
-- 🚀 **Ready for Vercel Deployment** - One-click web deployment
-- 🎯 **Updated App Name** - Now called "Game 999"
-- 🖼️ **New App Icon** - Custom gaming-themed SVG icon
+A comprehensive number game application with betting functionality, wallet management, and real-time results.
 
 ## 🚀 Quick Start
 
-### For Web Development & Deployment
+### Backend Setup
+```bash
+cd backend
+npm install
+npm start
+```
 
-1. **Build the web application:**
-   ```bash
-   # On Windows
+### Frontend Setup  
+```bash
+cd frontend_andriod
+flutter pub get
+flutter run
+```
+
+## 🧪 API Testing
+
+We have a single comprehensive test script that tests all backend APIs:
+
+```bash
+cd backend
+npm test
+# or
+npm run test-apis
+```
+
+### What the test covers:
+- ✅ **User Authentication** - Registration, login, token verification
+- ✅ **Game APIs** - Current round, place bets, get results
+- ✅ **Wallet APIs** - Balance, add funds, withdraw, transactions
+- ✅ **User Management** - Profile, update, password change
+- ✅ **QR Code APIs** - Generate payment QR codes
+- ✅ **Admin Authentication** - Admin login and management
+
+### Prerequisites for testing:
+1. **MongoDB** running locally or connection string in `.env`
+2. **Backend server** running on port 5000: `npm start`
+3. **Environment variables** configured (see `.env.example`)
+
+## 📁 Project Structure
+
+```
+├── backend/               # Node.js Express API
+│   ├── controllers/       # API controllers
+│   ├── models/           # MongoDB schemas  
+│   ├── routes/           # API routes
+│   ├── middleware/       # Auth & validation
+│   ├── scripts/          # Single test script
+│   └── server.js         # Main server file
+├── frontend_andriod/     # Flutter mobile app
+│   ├── lib/
+│   │   ├── services/     # API service classes
+│   │   ├── providers/    # State management
+│   │   ├── screens/      # App screens
+│   │   └── widgets/      # Reusable widgets
+└── admin-panel-cilent/   # React admin panel
+```
+
+## 🔧 Environment Variables
+
+Create `.env` in backend directory:
+```env
+NODE_ENV=development
+PORT=5000
+MONGODB_URI=mongodb://localhost:27017/numbergame
+JWT_SECRET=your-jwt-secret
+ADMIN_EMAIL=admin@game999.com
+ADMIN_PASSWORD=admin123
+```
+
+## 📱 Features
+
+### For Users:
+- 📝 Registration and login
+- 🎮 Number selection and betting
+- � Wallet management (add/withdraw funds)
+- 📊 Transaction and bet history
+- 📱 QR code payments
+- 🏆 Results and winnings
+
+### For Admins:
+- 👥 User management
+- 🎯 Result declaration
+- 💳 Wallet management
+- 📈 Reports and analytics
+- ⚙️ System settings
+
+## 🧪 Testing All APIs
+
+The `test-all-apis.js` script automatically:
+
+1. **Creates test data** (users, admin, agent, active round)
+2. **Tests all endpoints** with proper authentication
+3. **Validates responses** and error handling
+4. **Cleans up** test data after completion
+5. **Reports results** with pass/fail summary
+
+## 🔗 API Endpoints
+
+### Authentication
+- `POST /api/auth/register` - User registration
+- `POST /api/auth/login` - User login
+- `POST /api/auth/admin/login` - Admin login
+
+### Game
+- `GET /api/current-round` - Current game round
+- `POST /api/bet` - Place a bet
+- `GET /api/results` - Game results
+
+### Wallet
+- `GET /api/balance` - Wallet balance  
+- `POST /api/wallet/add` - Add balance request
+- `POST /api/wallet/withdraw` - Withdraw request
+
+### User
+- `GET /api/user/profile` - User profile
+- `PUT /api/user/update` - Update profile
+- `POST /api/user/change-password` - Change password
+
+## 🚀 Deployment
+
+The application is ready for deployment to platforms like:
+- **Backend**: Railway, Render, Heroku
+- **Frontend**: Google Play Store (Android)
+- **Admin Panel**: Vercel, Netlify
+
+## 📞 Support
+
+For issues or questions:
+- Check the comprehensive test script output
+- Review API documentation at `/api/docs`
+- Ensure all environment variables are set
+- Verify MongoDB connection
+
+---
+
+**Game 999** - Built with Node.js, Flutter, and React
    build_script.bat
    
    # On macOS/Linux  

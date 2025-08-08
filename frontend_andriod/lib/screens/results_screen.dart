@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../constants/colors.dart';
 import '../providers/auth_provider.dart';
-import '../providers/game_provider_updated.dart';
+import '../providers/game_provider.dart';
 import '../models/game_result_model.dart';
 import '../widgets/custom_appbar.dart';
 import '../widgets/loading_spinner.dart';
@@ -38,11 +38,8 @@ class _ResultsScreenState extends State<ResultsScreen>
   }
 
   void _refreshCurrentTabResults() {
-    final gameProvider = Provider.of<GameProviderUpdated>(
-      context,
-      listen: false,
-    );
-    gameProvider.loadGameResults();
+    final gameProvider = Provider.of<GameProvider>(context, listen: false);
+    gameProvider.loadGameData();
   }
 
   @override
@@ -54,7 +51,7 @@ class _ResultsScreenState extends State<ResultsScreen>
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
-    final gameProvider = Provider.of<GameProviderUpdated>(context);
+    final gameProvider = Provider.of<GameProvider>(context);
     final user = authProvider.currentUser;
     final isLoading = gameProvider.isLoading;
     final results = gameProvider.gameResults;

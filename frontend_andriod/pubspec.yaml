@@ -124,6 +124,7 @@ flutter_launcher_icons:
   android: true
   ios: true
   remove_alpha_ios: true
-  image_path: "assets/icons/app_icon.png"
-  adaptive_icon_background: "#FF6B35"
-  adaptive_icon_foreground: "assets/icons/app_icon.png"
+  image_path: "assets/icons/game_logo.png"
+  adaptive_icon_background: "#E54A2E"
+  adaptive_icon_foreground: "assets/icons/game_logo.png"
+  min_sdk_android: 21
